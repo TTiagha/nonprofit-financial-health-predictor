@@ -1,3 +1,7 @@
 pandas
 numpy
 scikit-learn
+boto3
+requests
+lxml
+pyarrow
