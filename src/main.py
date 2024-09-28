@@ -10,6 +10,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import os
 from collections import Counter
+import time
 
 def save_to_s3_parquet(records):
     if not records:
@@ -40,6 +41,7 @@ def main():
     
     all_records = []
     total_files_processed = 0
+    start_time = time.time()
     
     for url in urls:
         logger.info(f"Processing URL: {url}")
@@ -49,10 +51,10 @@ def main():
         total_files_processed += len(xml_files)
         
         logger.info(f"Files processed from this URL: {len(xml_files)}")
-        logger.info(f"Number of files containing {state_filter} nonprofits: {len(set(r.get('_source_file', '') for r in records))}")
 
-    logger.info(f"Total files processed across all URLs: {total_files_processed}")
-    logger.info(f"Total number of {state_filter} nonprofit records: {len(all_records)}")
+    end_time = time.time()
+    processing_time = end_time - start_time
+    logger.info(f"Processed {len(all_records)} {state_filter} nonprofit records from {total_files_processed} files in {processing_time:.2f} seconds")
 
     # Log overall statistics
     form_types = [r['FormType'] for r in all_records]
@@ -104,6 +106,16 @@ def main():
         logger.info(f"TotalExpenses: min={min(valid_expenses)}, max={max(valid_expenses)}, avg={sum(valid_expenses)/len(valid_expenses)}")
     else:
         logger.warning("No valid TotalExpenses values found")
+
+    # Log files without specific data
+    logger.info(f"Files without TotalRevenue: {len(all_records) - len(total_revenue)}")
+    logger.info(f"Files without TotalExpenses: {len(all_records) - len(total_expenses)}")
+    logger.info(f"Files without TotalAssets: {len(all_records) - len(total_assets)}")
+    logger.info(f"Files without TotalNetAssets: {len(all_records) - len(total_net_assets)}")
+
+    # Log average fields per record
+    avg_fields = sum(len(r) for r in all_records) / len(all_records)
+    logger.info(f"Average fields per record: {avg_fields:.2f}")
         
     analyze_field_coverage(all_records)
     analyze_path_usage(all_records)

@@ -8,6 +8,8 @@ This project aims to develop a predictive model for assessing the financial heal
 
 - The original master file has been broken down into smaller, more manageable files for better organization and maintainability.
 - The application now allows users to specify the state to filter for and input multiple URLs for processing.
+- Implemented CloudWatch logging for specific, important log messages.
+- Removed local file logging to health.log.
 
 ## Project Structure
 
@@ -51,6 +53,10 @@ nonprofit-financial-health-predictor/
    pip install -r requirements.txt
    ```
 
+3. Set up AWS credentials for CloudWatch logging:
+   - Ensure you have the AWS CLI installed and configured with the necessary permissions for CloudWatch Logs.
+   - Run `aws configure` and provide your AWS Access Key ID, Secret Access Key, and default region.
+
 ## Usage
 
 To run the main application:
@@ -68,6 +74,21 @@ The application will then:
 - Process the XML files, filtering for nonprofits in the specified state.
 - Analyze the data and provide statistics on various financial metrics.
 - Save the processed data to a Parquet file and upload it to Amazon S3.
+- Log important information to CloudWatch Logs.
+
+## CloudWatch Logging
+
+The application logs specific, important messages to AWS CloudWatch Logs. These include:
+- Processing statistics (e.g., number of records processed, processing time)
+- File statistics (e.g., files without certain financial data)
+- Data analysis results (e.g., average fields per record, financial metrics statistics)
+- S3 upload confirmations
+
+To view these logs:
+1. Go to the AWS CloudWatch console.
+2. Navigate to "Logs" > "Log groups".
+3. Find the log group named "NonprofitFinancialHealthPredictor".
+4. Click on the log stream named "ApplicationLogs" to view the logged messages.
 
 ## Development
 
@@ -107,6 +128,8 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 - The application now supports filtering by any state and processing multiple URLs.
 - Basic data processing, analysis, and S3 upload functionality is implemented.
 - CI/CD pipeline is implemented and functioning.
+- CloudWatch logging for important messages has been implemented.
+- Local file logging has been removed.
 
 ## Next Steps
 
