@@ -41,8 +41,7 @@ logging.basicConfig(level=logging.INFO,
 # Create CloudWatch handler
 cloudwatch_handler = watchtower.CloudWatchLogHandler(
     log_group="NonprofitFinancialHealthPredictor",
-    stream_name="ApplicationLogs",
-    boto3_session=boto3.Session()
+    stream_name="ApplicationLogs"
 )
 
 # Add CloudWatch filter
