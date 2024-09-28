@@ -4,6 +4,11 @@
 
 This project aims to develop a predictive model for assessing the financial health of nonprofit organizations using IRS Form 990 data. By leveraging machine learning techniques, we seek to provide insights that can help nonprofits, donors, and policymakers make more informed decisions.
 
+## Recent Updates
+
+- The original master file has been broken down into smaller, more manageable files for better organization and maintainability.
+- The application now allows users to specify the state to filter for and input multiple URLs for processing.
+
 ## Project Structure
 
 ```
@@ -14,6 +19,15 @@ nonprofit-financial-health-predictor/
 ├── data/             # Data storage and datasets
 ├── docs/             # Documentation files
 ├── src/              # Source code for the project
+│   ├── main.py           # Main application entry point
+│   ├── config.py         # Configuration settings
+│   ├── data_processor.py # Data processing functions
+│   ├── data_analyzer.py  # Data analysis functions
+│   ├── logger.py         # Logging configuration
+│   ├── s3_utils.py       # Amazon S3 utilities
+│   ├── utils.py          # Utility functions
+│   ├── xml_downloader.py # XML file downloading and extraction
+│   └── xml_parser.py     # XML parsing functions
 ├── tests/            # Test files
 │
 ├── .gitignore        # Specifies intentionally untracked files to ignore
@@ -21,7 +35,6 @@ nonprofit-financial-health-predictor/
 ├── LICENSE           # License file
 ├── README.md         # Project description and guide (this file)
 ├── docker-compose.yml # Defines multi-container Docker applications
-├── main.py           # Main application entry point
 └── requirements.txt  # List of project dependencies
 ```
 
@@ -38,15 +51,25 @@ nonprofit-financial-health-predictor/
    pip install -r requirements.txt
    ```
 
-## Development
-
-### Running the Application
+## Usage
 
 To run the main application:
 
 ```bash
-python main.py
+python src/main.py
 ```
+
+When prompted:
+1. Enter the state abbreviation you want to filter for (e.g., "CA" for California).
+2. Enter one or more URLs to process, separated by commas.
+
+The application will then:
+- Download and extract XML files from the provided URLs.
+- Process the XML files, filtering for nonprofits in the specified state.
+- Analyze the data and provide statistics on various financial metrics.
+- Save the processed data to a Parquet file and upload it to Amazon S3.
+
+## Development
 
 ### Docker
 
@@ -80,16 +103,18 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 
 ## Current Status
 
-- Basic project structure is set up
-- CI/CD pipeline is implemented and functioning
-- Placeholder functions for data loading, processing, and prediction are in place
+- Project structure has been reorganized for better maintainability.
+- The application now supports filtering by any state and processing multiple URLs.
+- Basic data processing, analysis, and S3 upload functionality is implemented.
+- CI/CD pipeline is implemented and functioning.
 
 ## Next Steps
 
-- Implement actual data loading from IRS Form 990 datasets
-- Develop data processing and feature engineering pipelines
-- Research and implement appropriate machine learning models for financial health prediction
-- Enhance test coverage and implement more comprehensive unit tests
+- Implement more comprehensive data analysis and visualization.
+- Develop machine learning models for financial health prediction.
+- Enhance test coverage and implement more unit tests.
+- Improve error handling and input validation.
+- Add more detailed documentation for each module.
 
 ## Contributing
 
@@ -104,17 +129,10 @@ Contributions to this project are welcome. Please follow these steps:
 
 ## License
 
-This project is licensed under the MIT - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
 
 [Your Name] - [Your Email]
 
 Project Link: [https://github.com/TTiagha/nonprofit-financial-health-predictor](https://github.com/TTiagha/nonprofit-financial-health-predictor)
-```
-
-This README now reflects the current state of your project, including the CI/CD setup, Docker configuration, and the progress you've made. It also outlines the next steps for development, which can serve as a roadmap for you and potential contributors.
-
-Remember to replace `[Your Name]`, `[Your Email]`, and `[LICENSE NAME]` with the appropriate information. Also, make sure the GitHub repository link is correct.
-
-You can further customize this README as your project evolves, adding more detailed usage instructions, contribution guidelines, or any other relevant information.

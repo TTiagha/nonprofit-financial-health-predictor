@@ -1,7 +1,5 @@
-pandas
-numpy
-scikit-learn
 boto3
+botocore
 requests
 lxml
 pyarrow
