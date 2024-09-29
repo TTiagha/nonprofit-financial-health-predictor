@@ -42,20 +42,25 @@ AVAILABLE_URLS = {
 def run_new990_check():
     logger.info("Running new990.py to check for updates...")
     try:
-        # Use the current file's directory to construct the path to new990.py
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        new990_path = os.path.join(current_dir, "new990.py")
+        # Use the parent directory of the current file to construct the path to new990.py
+        current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        new990_path = os.path.join(current_dir, "src", "new990.py")
         
         # Log the path being used
         logger.info(f"Attempting to run: {new990_path}")
         
-        # Use subprocess.run with shell=True for Windows compatibility
-        subprocess.run(f"python {new990_path}", shell=True, check=True)
-        logger.info("Finished checking for updates.")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error running new990.py: {e}")
-    except FileNotFoundError:
-        logger.error(f"new990.py file not found. Looked in: {current_dir}")
+        # Use subprocess.run with capture_output=True to prevent blocking
+        result = subprocess.run(f"python {new990_path}", shell=True, check=False, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            logger.info("Finished checking for updates.")
+            logger.info(f"Output: {result.stdout}")
+        else:
+            logger.error(f"Error running new990.py: {result.stderr}")
+    except Exception as e:
+        logger.error(f"An error occurred while running new990.py: {str(e)}")
+    
+    logger.info("Continuing with the rest of the script...")
 
 def load_data():
     """
