@@ -42,12 +42,20 @@ AVAILABLE_URLS = {
 def run_new990_check():
     logger.info("Running new990.py to check for updates...")
     try:
-        subprocess.run(["python", "src/new990.py"], check=True)
+        # Use the current file's directory to construct the path to new990.py
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        new990_path = os.path.join(current_dir, "new990.py")
+        
+        # Log the path being used
+        logger.info(f"Attempting to run: {new990_path}")
+        
+        # Use subprocess.run with shell=True for Windows compatibility
+        subprocess.run(f"python {new990_path}", shell=True, check=True)
         logger.info("Finished checking for updates.")
     except subprocess.CalledProcessError as e:
         logger.error(f"Error running new990.py: {e}")
     except FileNotFoundError:
-        logger.error("new990.py file not found. Please ensure it exists in the src directory.")
+        logger.error(f"new990.py file not found. Looked in: {current_dir}")
 
 def load_data():
     """
