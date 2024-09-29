@@ -42,7 +42,7 @@ AVAILABLE_URLS = {
 def run_new990_check():
     logger.info("Running new990.py to check for updates...")
     try:
-        subprocess.run(["python", "src/new990.py"], check=True)
+        subprocess.run(["python", "new990.py"], check=True)
         logger.info("Finished checking for updates.")
     except subprocess.CalledProcessError as e:
         logger.error(f"Error running new990.py: {e}")
