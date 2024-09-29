@@ -4,16 +4,33 @@
 
 This project aims to develop a predictive model for assessing the financial health of nonprofit organizations using IRS Form 990 data. By leveraging machine learning techniques, we seek to provide insights that can help nonprofits, donors, and policymakers make more informed decisions.
 
+## Key Features
+
+- Data Processing: High-speed XML processing using AWS CloudShell
+- Flexible Analysis: User can filter by state and select specific IRS data ZIP files
+- Comprehensive Metrics: Analyzes key financial indicators (Total Assets, Revenue, Expenses, Net Assets)
+- Data Storage: Efficient storage using Parquet format in Amazon S3
+- Monitoring: CloudWatch alarms for process monitoring and cost management
+- Logging: Detailed logging in CloudWatch for error tracking and run summaries
+- Automated IRS Form 990 XML File Tracking: Monitors and reports new file releases
+
 ## Recent Updates
 
 - The original master file has been broken down into smaller, more manageable files for better organization and maintainability.
 - The application now allows users to specify the state to filter for and input multiple URLs for processing.
 - Implemented CloudWatch logging for specific, important log messages.
 - Removed local file logging to health.log.
+- Added new990.py script for automated tracking of new IRS Form 990 XML file releases.
+
+## Tech Stack
+
+- AWS Services: S3, CloudWatch, CloudShell
+- Data Processing: Python (pandas, pyarrow)
+- Data Format: XML parsing, Parquet for storage
+- Web Scraping: BeautifulSoup4 for parsing IRS website
 
 ## Project Structure
 
-```
 nonprofit-financial-health-predictor/
 │
 ├── .github/
@@ -29,7 +46,8 @@ nonprofit-financial-health-predictor/
 │   ├── s3_utils.py       # Amazon S3 utilities
 │   ├── utils.py          # Utility functions
 │   ├── xml_downloader.py # XML file downloading and extraction
-│   └── xml_parser.py     # XML parsing functions
+│   ├── xml_parser.py     # XML parsing functions
+│   └── new990.py         # IRS Form 990 XML file tracking script
 ├── tests/            # Test files
 │
 ├── .gitignore        # Specifies intentionally untracked files to ignore
@@ -38,7 +56,6 @@ nonprofit-financial-health-predictor/
 ├── README.md         # Project description and guide (this file)
 ├── docker-compose.yml # Defines multi-container Docker applications
 └── requirements.txt  # List of project dependencies
-```
 
 ## Setup and Installation
 
@@ -59,6 +76,8 @@ nonprofit-financial-health-predictor/
 
 ## Usage
 
+### Main Application
+
 To run the main application:
 
 ```bash
@@ -76,6 +95,19 @@ The application will then:
 - Save the processed data to a Parquet file and upload it to Amazon S3.
 - Log important information to CloudWatch Logs.
 
+### IRS Form 990 XML File Tracker
+
+To check for new IRS Form 990 XML file releases:
+
+```bash
+python src/new990.py
+```
+
+This script will:
+- Check the IRS website for new Form 990 XML file releases.
+- Report any new files found since the last check.
+- Update the last checked year to avoid redundant processing.
+
 ## CloudWatch Logging
 
 The application logs specific, important messages to AWS CloudWatch Logs. These include:
@@ -89,6 +121,20 @@ To view these logs:
 2. Navigate to "Logs" > "Log groups".
 3. Find the log group named "NonprofitFinancialHealthPredictor".
 4. Click on the log stream named "ApplicationLogs" to view the logged messages.
+
+## Sample Output
+
+Processed 84 RI nonprofit records from 21513 files in 105.49 seconds
+Files without TotalRevenue: 0
+Files without TotalExpenses: 0
+Files without TotalAssets: 0
+Files without TotalNetAssets: 0
+Average fields per record: 19.67
+Form type distribution: {'990PF': 12, '990EZ': 17, '990': 53, '990T': 2}
+TotalNetAssets: min=-1426990.0, max=111192741.0, avg=4526458.928571428
+TotalAssets: min=0.0, max=111238696.0, avg=5387384.130952381
+TotalRevenue: min=-74151.0, max=61455293.0, avg=1827346.619047619
+TotalExpenses: min=0.0, max=60192780.0, avg=1672105.2142857143
 
 ## Development
 
@@ -130,6 +176,7 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 - CI/CD pipeline is implemented and functioning.
 - CloudWatch logging for important messages has been implemented.
 - Local file logging has been removed.
+- Automated tracking of new IRS Form 990 XML file releases is implemented.
 
 ## Next Steps
 
