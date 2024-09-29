@@ -40,9 +40,14 @@ AVAILABLE_URLS = {
 }
 
 def run_new990_check():
-    logger.info("Running New990.py to check for updates...")
-    subprocess.run(["python", "src/New990.py"], check=True)
-    logger.info("Finished checking for updates.")
+    logger.info("Running new990.py to check for updates...")
+    try:
+        subprocess.run(["python", "src/new990.py"], check=True)
+        logger.info("Finished checking for updates.")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error running new990.py: {e}")
+    except FileNotFoundError:
+        logger.error("new990.py file not found. Please ensure it exists in the src directory.")
 
 def load_data():
     """
