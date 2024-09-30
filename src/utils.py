@@ -23,11 +23,10 @@ def extract_field(Return, field_paths, ns, field_name, data):
             if not path.startswith('/'):
                 path = './' + path
             logger.debug(f"Trying path for {field_name}: {path}")
-            use_namespaces = not ('local-name()' in path or '/*' in path)
-            if use_namespaces:
-                result = Return.xpath(path, namespaces=ns)
-            else:
-                result = Return.xpath(path)
+            
+            # Use namespaces consistently
+            result = Return.xpath(path, namespaces={'irs': 'http://www.irs.gov/efile'})
+            
             if result:
                 value = str(result[0]).strip()
                 logger.debug(f"Field {field_name} found using path: {path}")
@@ -36,8 +35,9 @@ def extract_field(Return, field_paths, ns, field_name, data):
                 return value
         except Exception as e:
             logger.error(f'Error extracting {field_name} using path {path}: {e}')
+    
     logger.debug(f'Field {field_name} not found using any defined path.')
-    return None
+    return None  # Return None when no data is found
 
 def convert_value(value, type_):
     try:

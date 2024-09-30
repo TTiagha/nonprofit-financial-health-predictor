@@ -239,6 +239,9 @@ desired_fields = {
         ],
         '990T': [
             '//ReturnData/*[local-name()="IRS990TScheduleA"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
+            '//ReturnData/*[local-name()="IRS990T"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
+            '//ReturnData/*[local-name()="IRS990T"]/*[local-name()="BusinessActivityCode"]/text()',
+            '//ReturnData/*[local-name()="IRS990T"]//*[contains(local-name(), "ActivityCd")]/text()',
             '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
             '//*[local-name()="BusinessActivityCode"]/text()',
             '//*[local-name()="ActivityCd"]/text()',
