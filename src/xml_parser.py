@@ -4,6 +4,7 @@ from lxml import etree
 from logger import logger
 from config import desired_fields
 from utils import extract_field, convert_value, detect_form_type
+import re
 
 def parse_return(Return, ns, filename):
     # Correct namespace mapping
@@ -46,6 +47,28 @@ def parse_return(Return, ns, filename):
                         break
                 except Exception as e:
                     logger.error(f"Error extracting BusinessActivityCode using alternative path in {filename}: {str(e)}")
+
+    # Explicit handling for TaxYear
+    tax_year = data.get('TaxYear')
+    if tax_year is None:
+        # Try to extract year from TaxPeriodEndDt
+        tax_period_end_dt = extract_field(Return, ['irs:ReturnHeader/irs:TaxPeriodEndDt/text()'], ns, 'TaxPeriodEndDt', data)
+        if tax_period_end_dt:
+            match = re.search(r'\d{4}', tax_period_end_dt)
+            if match:
+                tax_year = int(match.group())
+                logger.info(f"Extracted TaxYear {tax_year} from TaxPeriodEndDt in {filename}")
+            else:
+                logger.warning(f"Could not extract year from TaxPeriodEndDt: {tax_period_end_dt} in {filename}")
+        else:
+            logger.warning(f"TaxYear and TaxPeriodEndDt not found in {filename}")
+
+    if tax_year is not None:
+        data['TaxYear'] = tax_year
+    else:
+        # If we still can't determine the tax year, use a default or skip the record
+        logger.error(f"Could not determine TaxYear for {filename}. Skipping record.")
+        return None
 
     logger.info(f"Extracted {len(data)} fields from {filename}")
     logger.debug(f"Extracted fields from {filename}: {', '.join(data.keys())}")

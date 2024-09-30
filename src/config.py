@@ -132,11 +132,11 @@ desired_fields = {
                 '//*[contains(local-name(), "FMVAssets") and contains(local-name(), "EOY")]/text()',
             ],
             '990T': [
-            '//*[local-name()="BookValueAssetsEOYAmt"]/text()',
-            '//*[local-name()="TotalAssetsEOYAmt"]/text()',
-            '//*[local-name()="TotalAssets"]/text()',
-            '//*[contains(local-name(), "TotalAssets") and contains(local-name(), "EOY")]/text()',
-        ],
+                '//*[local-name()="BookValueAssetsEOYAmt"]/text()',
+                '//*[local-name()="TotalAssetsEOYAmt"]/text()',
+                '//*[local-name()="TotalAssets"]/text()',
+                '//*[contains(local-name(), "TotalAssets") and contains(local-name(), "EOY")]/text()',
+            ],
             'Common': [
                 '//*[contains(local-name(), "TotalAssets") and contains(local-name(), "EOY")]/text()',
                 '//*[contains(local-name(), "AssetsEOY")]/text()',
@@ -147,111 +147,117 @@ desired_fields = {
         }
     },
     'MissionStatement': {
-    'type': 'string',
-    'paths': {
-        '990': [
-            '//*[local-name()="MissionDesc"]/text()',
-            '//*[local-name()="MissionStatement"]/text()',
-            '//*[local-name()="MissionStatementTxt"]/text()',
-            '//*[local-name()="ActivityOrMissionDesc"]/text()',
-            '//*[local-name()="PrimaryExemptPurposeTxt"]/text()',
-            '//*[contains(local-name(), "Mission") and contains(local-name(), "Desc")]/text()',
-            '//*[contains(local-name(), "ExemptPurpose")]/text()',
-            '//*[contains(local-name(), "MissionStatement")]/text()'
-        ],
-        '990EZ': [
-            '//*[local-name()="MissionDesc"]/text()',
-            '//*[local-name()="MissionStatement"]/text()',
-            '//*[local-name()="PrimaryExemptPurposeTxt"]/text()',
-            '//*[contains(local-name(), "Mission") and contains(local-name(), "Desc")]/text()',
-        ],
-        '990PF': [
-            '//*[local-name()="MissionDesc"]/text()',
-            '//*[local-name()="MissionStatement"]/text()',
-            '//*[local-name()="ActivityOrMissionDesc"]/text()',
-            '//*[local-name()="PrimaryExemptPurposeTxt"]/text()',
-            '//*[contains(local-name(), "ExemptPurpose")]/text()',
-        ],
-        '990T': [
-            '//*[local-name()="MissionDesc"]/text()',
-            '//*[local-name()="MissionStatement"]/text()',
-            '//*[local-name()="ActivityOrMissionDesc"]/text()',
-        ],
-        'Common': [
-            '//*[contains(local-name(), "Mission") and (contains(local-name(), "Desc") or contains(local-name(), "Statement") or contains(local-name(), "Txt"))]/text()',
-            '//*[contains(local-name(), "ExemptPurpose")]/text()',
-            '//*[contains(local-name(), "ActivityOrMissionDesc")]/text()',
-            '//*[contains(local-name(), "PrimaryExemptPurposeTxt")]/text()'
-        ]
-    }
-},
+        'type': 'string',
+        'paths': {
+            '990': [
+                '//*[local-name()="MissionDesc"]/text()',
+                '//*[local-name()="MissionStatement"]/text()',
+                '//*[local-name()="MissionStatementTxt"]/text()',
+                '//*[local-name()="ActivityOrMissionDesc"]/text()',
+                '//*[local-name()="PrimaryExemptPurposeTxt"]/text()',
+                '//*[contains(local-name(), "Mission") and contains(local-name(), "Desc")]/text()',
+                '//*[contains(local-name(), "ExemptPurpose")]/text()',
+                '//*[contains(local-name(), "MissionStatement")]/text()'
+            ],
+            '990EZ': [
+                '//*[local-name()="MissionDesc"]/text()',
+                '//*[local-name()="MissionStatement"]/text()',
+                '//*[local-name()="PrimaryExemptPurposeTxt"]/text()',
+                '//*[contains(local-name(), "Mission") and contains(local-name(), "Desc")]/text()',
+            ],
+            '990PF': [
+                '//*[local-name()="MissionDesc"]/text()',
+                '//*[local-name()="MissionStatement"]/text()',
+                '//*[local-name()="ActivityOrMissionDesc"]/text()',
+                '//*[local-name()="PrimaryExemptPurposeTxt"]/text()',
+                '//*[contains(local-name(), "ExemptPurpose")]/text()',
+            ],
+            '990T': [
+                '//*[local-name()="MissionDesc"]/text()',
+                '//*[local-name()="MissionStatement"]/text()',
+                '//*[local-name()="ActivityOrMissionDesc"]/text()',
+            ],
+            'Common': [
+                '//*[contains(local-name(), "Mission") and (contains(local-name(), "Desc") or contains(local-name(), "Statement") or contains(local-name(), "Txt"))]/text()',
+                '//*[contains(local-name(), "ExemptPurpose")]/text()',
+                '//*[contains(local-name(), "ActivityOrMissionDesc")]/text()',
+                '//*[contains(local-name(), "PrimaryExemptPurposeTxt")]/text()'
+            ]
+        }
+    },
     'TotalNetAssets': {
-    'type': 'double',
-    'paths': {
-        '990': [
-            '//*[local-name()="TotalNetAssetsFundBalanceEOYAmt"]/text()',
-            '//*[local-name()="TotNetAssetsFundBalanceEOYAmt"]/text()',
-            '//*[local-name()="NetAssetsFundBalancesEOYAmt"]/text()',
-            '//*[local-name()="NetAssetsOrFundBalancesEOYAmt"]/text()',
-            '//*[local-name()="NetAssetsEOYAmt"]/text()',
-            '//*[contains(local-name(), "TotalNetAssets") and contains(local-name(), "EOY")]/text()',
-            '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
-        ],
-        '990EZ': [
-            '//*[local-name()="TotalNetAssetsEOYAmt"]/text()',
-            '//*[local-name()="NetAssetsOrFundBalancesEOYAmt"]/text()',
-            '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
-        ],
-        '990PF': [
-            '//*[local-name()="TotNetAstOrFundBalancesEOYAmt"]/text()',
-            '//*[local-name()="TotalNetAssetsEOYAmt"]/text()',
-            '//*[local-name()="NetAssetsOrFundBalancesEOYAmt"]/text()',
-            '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
-        ],
-        '990T': [
-            '//*[local-name()="BookValueAssetsEOYAmt"]/text()',
-        ],
-        'Common': [
-            '//*[contains(local-name(), "TotalNetAssets") and contains(local-name(), "EOY")]/text()',
-            '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
-            '//*[contains(local-name(), "TotNetAstOrFundBalancesEOYAmt")]/text()',
-            '//*[contains(local-name(), "NetAssetsOrFundBalancesEOYAmt")]/text()',
-        ]
-    }
-},
+        'type': 'double',
+        'paths': {
+            '990': [
+                '//*[local-name()="TotalNetAssetsFundBalanceEOYAmt"]/text()',
+                '//*[local-name()="TotNetAssetsFundBalanceEOYAmt"]/text()',
+                '//*[local-name()="NetAssetsFundBalancesEOYAmt"]/text()',
+                '//*[local-name()="NetAssetsOrFundBalancesEOYAmt"]/text()',
+                '//*[local-name()="NetAssetsEOYAmt"]/text()',
+                '//*[contains(local-name(), "TotalNetAssets") and contains(local-name(), "EOY")]/text()',
+                '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
+            ],
+            '990EZ': [
+                '//*[local-name()="TotalNetAssetsEOYAmt"]/text()',
+                '//*[local-name()="NetAssetsOrFundBalancesEOYAmt"]/text()',
+                '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
+            ],
+            '990PF': [
+                '//*[local-name()="TotNetAstOrFundBalancesEOYAmt"]/text()',
+                '//*[local-name()="TotalNetAssetsEOYAmt"]/text()',
+                '//*[local-name()="NetAssetsOrFundBalancesEOYAmt"]/text()',
+                '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
+            ],
+            '990T': [
+                '//*[local-name()="BookValueAssetsEOYAmt"]/text()',
+            ],
+            'Common': [
+                '//*[contains(local-name(), "TotalNetAssets") and contains(local-name(), "EOY")]/text()',
+                '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
+                '//*[contains(local-name(), "TotNetAstOrFundBalancesEOYAmt")]/text()',
+                '//*[contains(local-name(), "NetAssetsOrFundBalancesEOYAmt")]/text()',
+            ]
+        }
+    },
     'BusinessActivityCode': {
-    'type': 'string',
-    'paths': {
-        '990': [
-            '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
-            '//*[local-name()="BusinessActivityCode"]/text()',
-            '//*[local-name()="ActivityCd"]/text()',
-        ],
-        '990EZ': [
-            '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
-            '//*[local-name()="BusinessActivityCode"]/text()',
-            '//*[local-name()="ActivityCd"]/text()',
-        ],
-        '990PF': [
-            '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
-            '//*[local-name()="BusinessActivityCode"]/text()',
-            '//*[local-name()="ActivityCd"]/text()',
-        ],
-        '990T': [
-            '//ReturnData/*[local-name()="IRS990TScheduleA"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
-            '//ReturnData/*[local-name()="IRS990T"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
-            '//ReturnData/*[local-name()="IRS990T"]/*[local-name()="BusinessActivityCode"]/text()',
-            '//ReturnData/*[local-name()="IRS990T"]//*[contains(local-name(), "ActivityCd")]/text()',
-            '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
-            '//*[local-name()="BusinessActivityCode"]/text()',
-            '//*[local-name()="ActivityCd"]/text()',
-        ],
-        'Common': [
-            '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
-            '//*[contains(local-name(), "BusinessActivityCode")]/text()',
-            '//*[contains(local-name(), "ActivityCd")]/text()',
-        ]
+        'type': 'string',
+        'paths': {
+            '990': [
+                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ActivityCd"]/text()',
+            ],
+            '990EZ': [
+                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ActivityCd"]/text()',
+            ],
+            '990PF': [
+                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ActivityCd"]/text()',
+            ],
+            '990T': [
+                '//ReturnData//*[local-name()="IRS990TScheduleA"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//ReturnData//*[local-name()="IRS990T"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//ReturnData//*[local-name()="IRS990T"]/*[local-name()="BusinessActivityCode"]/text()',
+                '//ReturnData//*[local-name()="IRS990T"]//*[contains(local-name(), "ActivityCd")]/text()',
+                '//ReturnData//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//ReturnData//*[local-name()="BusinessActivityCode"]/text()',
+                '//ReturnData//*[contains(local-name(), "ActivityCd")]/text()',
+                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ActivityCd"]/text()',
+            ],
+            'Common': [
+                '//ReturnData//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//ReturnData//*[local-name()="BusinessActivityCode"]/text()',
+                '//ReturnData//*[contains(local-name(), "ActivityCd")]/text()',
+                '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
+                '//*[contains(local-name(), "BusinessActivityCode")]/text()',
+                '//*[contains(local-name(), "ActivityCd")]/text()',
+            ]
+        }
     }
-}
 
 }
