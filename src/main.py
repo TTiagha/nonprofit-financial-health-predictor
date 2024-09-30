@@ -217,12 +217,6 @@ def main():
         analyze_field_coverage(all_records)
         analyze_path_usage(all_records)
         save_to_s3_parquet(all_records)
-        
-        # Optionally, process data further and predict financial health
-        # Assuming all_records is the data
-        processed_data = process_data(all_records)
-        prediction = predict_financial_health(processed_data)
-        logger.info(f"Prediction process completed successfully: {prediction}")
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
