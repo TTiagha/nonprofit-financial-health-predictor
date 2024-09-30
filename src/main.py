@@ -226,6 +226,8 @@ def upload_file_to_s3_noBAC(file_path, s3_key):
         with open(file_path, 'rb') as file:
             s3_client.upload_fileobj(file, S3_BUCKET, s3_key)
         logger.info(f"Successfully uploaded {file_path} to S3: {s3_key}")
+    except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
     except Exception as e:
         logger.error(f"Error uploading {file_path} to S3: {str(e)}")
 
@@ -259,9 +261,11 @@ def main():
     
         # Upload files without BusinessActivityCode to S3
         logger.info(f"Uploading files without BusinessActivityCode to S3 (max 20 files)")
+        logger.info(f"Total files without BAC: {len(files_without_BAC)}")
         for i, file_path in enumerate(files_without_BAC[:20]):
             file_name = os.path.basename(file_path)
             s3_key = f"{S3_FOLDER}/noBAC/{file_name}"
+            logger.info(f"Attempting to upload file {i+1}: {file_path}")
             upload_file_to_s3_noBAC(file_path, s3_key)
             if i == 19:
                 break
