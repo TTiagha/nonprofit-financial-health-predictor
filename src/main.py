@@ -15,7 +15,7 @@ import pandas as pd
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
 from data_analyzer import analyze_field_coverage, analyze_path_usage
-from s3_utils import upload_file_to_s3, download_file_from_s3
+from s3_utils import upload_file_to_s3, download_file_from_s3, get_s3_client
 from config import S3_BUCKET, S3_FOLDER
 
 # Setup logging
@@ -220,6 +220,15 @@ def get_user_input():
     
     return state, selected_urls
 
+def upload_file_to_s3_noBAC(file_path, s3_key):
+    s3_client = get_s3_client()
+    try:
+        with open(file_path, 'rb') as file:
+            s3_client.upload_fileobj(file, S3_BUCKET, s3_key)
+        logger.info(f"Successfully uploaded {file_path} to S3: {s3_key}")
+    except Exception as e:
+        logger.error(f"Error uploading {file_path} to S3: {str(e)}")
+
 def main():
     logger.info(f"Starting Nonprofit Financial Health Predictor at {datetime.now()}")
 
@@ -232,11 +241,14 @@ def main():
         total_files_processed = 0
         start_time = time.time()
         
+        files_without_BAC = []
+        
         for url in urls:
             logger.info(f"Processing URL: {url}")
             xml_files = download_and_extract_xml_files(url)
-            records = process_xml_files(xml_files, state_filter)
+            records, no_BAC_files = process_xml_files(xml_files, state_filter)
             all_records.extend(records)
+            files_without_BAC.extend(no_BAC_files)
             total_files_processed += len(xml_files)
             
             logger.info(f"Files processed from this URL: {len(xml_files)}")
@@ -244,6 +256,15 @@ def main():
         end_time = time.time()
         processing_time = end_time - start_time
         logger.info(f"Processed {len(all_records)} {state_filter} nonprofit records from {total_files_processed} files in {processing_time:.2f} seconds")
+    
+        # Upload files without BusinessActivityCode to S3
+        logger.info(f"Uploading files without BusinessActivityCode to S3 (max 20 files)")
+        for i, file_path in enumerate(files_without_BAC[:20]):
+            file_name = os.path.basename(file_path)
+            s3_key = f"{S3_FOLDER}/noBAC/{file_name}"
+            upload_file_to_s3_noBAC(file_path, s3_key)
+            if i == 19:
+                break
     
         # Log overall statistics
         form_types = [r['FormType'] for r in all_records]

@@ -17,6 +17,7 @@ def process_xml_files(xml_files, state_filter):
     no_exp_files = set()
     no_ass_files = set()
     no_nass_files = set()
+    no_bac_files = set()  # New set to track files without BusinessActivityCode
     start_time = time.time()
 
     for filename, xml_content in xml_files.items():
@@ -36,6 +37,7 @@ def process_xml_files(xml_files, state_filter):
             file_missing_expenses = False
             file_missing_assets = False
             file_missing_net_assets = False
+            file_missing_bac = False  # New flag for missing BusinessActivityCode
 
             for i, Return in enumerate(Returns):
                 logger.info(f'Processing Return {i+1} in {filename}')
@@ -46,18 +48,32 @@ def process_xml_files(xml_files, state_filter):
                         state_files.add(filename)
                         logger.info(f"{state_filter} nonprofit found in {filename}, Return {i+1}")
 
-                        # Check for missing fields and upload to S3 if necessary
-                        # ... (same logic as before)
+                        # Check for missing fields and set flags
+                        if 'TotalRevenue' not in data or data['TotalRevenue'] is None:
+                            file_missing_revenue = True
+                        if 'TotalExpenses' not in data or data['TotalExpenses'] is None:
+                            file_missing_expenses = True
+                        if 'TotalAssets' not in data or data['TotalAssets'] is None:
+                            file_missing_assets = True
+                        if 'TotalNetAssets' not in data or data['TotalNetAssets'] is None:
+                            file_missing_net_assets = True
+                        if 'BusinessActivityCode' not in data or data['BusinessActivityCode'] is None:
+                            file_missing_bac = True
 
                 except Exception as e:
                     logger.error(f'Error processing Return {i+1} in {filename}: {e}')
 
-            # Upload to the appropriate S3 folder based on missing fields
+            # Add file to the appropriate sets based on missing fields
             if file_missing_revenue:
                 no_revenue_files.add(filename)
-                upload_file_to_s3(xml_content, f'{S3_NOREV_FOLDER}/{filename}')
-
-            # ... handle other missing fields similarly
+            if file_missing_expenses:
+                no_exp_files.add(filename)
+            if file_missing_assets:
+                no_ass_files.add(filename)
+            if file_missing_net_assets:
+                no_nass_files.add(filename)
+            if file_missing_bac:
+                no_bac_files.add(filename)
 
         except Exception as e:
             logger.error(f'Error processing {filename}: {e}')
@@ -67,16 +83,15 @@ def process_xml_files(xml_files, state_filter):
 
     end_time = time.time()
     logger.info(f'Processed {len(records)} {state_filter} nonprofit records from {len(xml_files)} files in {end_time - start_time:.2f} seconds')
-    # ... rest of the logging and statistics
     logger.info(f'Files without TotalRevenue: {len(no_revenue_files)}')
     logger.info(f'Files without TotalExpenses: {len(no_exp_files)}')
     logger.info(f'Files without TotalAssets: {len(no_ass_files)}')
     logger.info(f'Files without TotalNetAssets: {len(no_nass_files)}')
+    logger.info(f'Files without BusinessActivityCode: {len(no_bac_files)}')
 
     if records:
         logger.info(f"Average fields per record: {sum(len(r) for r in records) / len(records):.2f}")
     else:
-        logger.warning("No valid Georgia nonprofit records processed.")
+        logger.warning("No valid nonprofit records processed.")
 
-
-    return records
+    return records, list(no_bac_files)  # Return both records and files without BusinessActivityCode
