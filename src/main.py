@@ -296,11 +296,27 @@ def main():
         else:
             logger.warning("No valid TotalExpenses values found")
     
+        # Log BusinessActivityCode statistics
+        business_activity_codes = [r.get('BusinessActivityCode') for r in all_records if 'BusinessActivityCode' in r]
+        logger.info(f"BusinessActivityCode: found in {len(business_activity_codes)}/{len(all_records)} records")
+        if business_activity_codes:
+            valid_codes = [code for code in business_activity_codes if code]
+            if valid_codes:
+                code_counter = Counter(valid_codes)
+                top_5_codes = code_counter.most_common(5)
+                logger.info(f"Top 5 BusinessActivityCodes: {top_5_codes}")
+                logger.info(f"Number of unique BusinessActivityCodes: {len(set(valid_codes))}")
+            else:
+                logger.warning("No valid BusinessActivityCode values found")
+        else:
+            logger.warning("No BusinessActivityCode values found")
+    
         # Log files without specific data
         logger.info(f"Files without TotalRevenue: {len(all_records) - len(total_revenue)}")
         logger.info(f"Files without TotalExpenses: {len(all_records) - len(total_expenses)}")
         logger.info(f"Files without TotalAssets: {len(all_records) - len(total_assets)}")
         logger.info(f"Files without TotalNetAssets: {len(all_records) - len(total_net_assets)}")
+        logger.info(f"Files without BusinessActivityCode: {len(all_records) - len(business_activity_codes)}")
     
         # Log average fields per record
         avg_fields = sum(len(r) for r in all_records) / len(all_records)
