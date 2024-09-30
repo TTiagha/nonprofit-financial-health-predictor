@@ -109,45 +109,24 @@ def get_user_input():
         if year in AVAILABLE_URLS:
             print(f"\nAvailable URLs for {year}:")
             for i, url in enumerate(AVAILABLE_URLS[year], 1):
-                print(f"{i}. {url}")
+                print(f"[ ] {i}. {url}")
             
             selections = input(f"Enter the number(s) of the URL(s) you want to process for {year} (comma-separated, or 'all'): ")
             if selections.lower() == 'all':
                 selected_urls.extend(AVAILABLE_URLS[year])
+                print("Selected all URLs for", year)
             else:
                 indices = [int(i.strip()) - 1 for i in selections.split(',')]
-                selected_urls.extend([AVAILABLE_URLS[year][i] for i in indices if 0 <= i < len(AVAILABLE_URLS[year])])
+                for i in indices:
+                    if 0 <= i < len(AVAILABLE_URLS[year]):
+                        selected_urls.append(AVAILABLE_URLS[year][i])
+                        print(f"[X] {i+1}. {AVAILABLE_URLS[year][i]}")
+                    else:
+                        print(f"Invalid selection: {i+1}")
         else:
             print(f"Invalid year: {year}")
     
     return state, selected_urls
-
-# def load_data():
-#     """
-#     Function to load data from the IRS Form 990 dataset.
-#     This is a placeholder and should be implemented with actual data loading logic.
-#     """
-#     logger.info("Loading data...")
-#     # Implement your data loading logic here
-#     return "Data loaded successfully"
-
-# def process_data(data):
-#     """
-#     Function to process the loaded data.
-#     This is a placeholder and should be implemented with your data processing logic.
-#     """
-#     logger.info("Processing data...")
-#     # Implement your data processing logic here
-#     return "Data processed successfully"
-
-# def predict_financial_health(processed_data):
-#     """
-#     Function to predict financial health based on processed data.
-#     This is a placeholder and should be implemented with your prediction model.
-#     """
-#     logger.info("Predicting financial health...")
-#     # Implement your prediction logic here
-#     return "Financial health prediction complete"
 
 def main():
     logger.info(f"Starting Nonprofit Financial Health Predictor at {datetime.now()}")
