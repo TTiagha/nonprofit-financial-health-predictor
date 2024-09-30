@@ -8,11 +8,14 @@ import subprocess
 from collections import Counter
 import pyarrow as pa
 import pyarrow.parquet as pq
+import boto3
+from io import BytesIO
+import pandas as pd
 
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
 from data_analyzer import analyze_field_coverage, analyze_path_usage
-from s3_utils import upload_file_to_s3
+from s3_utils import upload_file_to_s3, download_file_from_s3
 from config import S3_BUCKET, S3_FOLDER
 
 # Setup logging
@@ -136,17 +139,51 @@ def save_to_s3_parquet(records):
         return
 
     logger.info('Converting records to Parquet format.')
-    # Convert records to Apache Arrow Table
-    table = pa.Table.from_pylist(records)
+    new_df = pd.DataFrame(records)
 
-    # Write Parquet file to local disk
-    local_parquet_file = 'irs990_data.parquet'
-    pq.write_table(table, local_parquet_file)
-
-    # Upload Parquet file to S3
+    # S3 key for the Parquet file
     s3_key = f'{S3_FOLDER}/irs990_data.parquet'
+
+    # Check if the file already exists in S3
+    s3_client = boto3.client('s3')
+    try:
+        s3_client.head_object(Bucket=S3_BUCKET, Key=s3_key)
+        file_exists = True
+    except:
+        file_exists = False
+
+    if file_exists:
+        logger.info('Existing Parquet file found. Downloading and merging data.')
+        # Download existing file
+        existing_data = download_file_from_s3(s3_key)
+        existing_df = pd.read_parquet(BytesIO(existing_data))
+
+        # Merge existing and new data
+        merged_df = pd.concat([existing_df, new_df], ignore_index=True)
+        
+        # Remove duplicates based on EIN and TaxYear, keeping the last occurrence (which will be the new data)
+        merged_df.drop_duplicates(subset=['EIN', 'TaxYear'], keep='last', inplace=True)
+        
+        logger.info(f'Merged {len(new_df)} new or updated records with {len(existing_df)} existing records.')
+        logger.info(f'After deduplication, total records: {len(merged_df)}')
+    else:
+        logger.info('No existing Parquet file found. Creating new file.')
+        merged_df = new_df
+
+    # Convert the merged DataFrame to a PyArrow Table
+    merged_table = pa.Table.from_pandas(merged_df)
+
+    # Write merged data to a local temporary file
+    local_parquet_file = 'temp_irs990_data.parquet'
+    pq.write_table(merged_table, local_parquet_file)
+
+    # Upload the merged Parquet file to S3
     with open(local_parquet_file, 'rb') as f:
         upload_file_to_s3(f.read(), s3_key)
+    
+    logger.info(f'Successfully uploaded merged data to S3: {s3_key}')
+    
+    # Remove the temporary local file
     os.remove(local_parquet_file)
 
 def get_user_input():

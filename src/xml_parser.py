@@ -24,6 +24,8 @@ def parse_return(Return, ns, filename):
         value = extract_field(Return, field_paths, ns, field_name, data)
         if value is not None:
             data[field_name] = convert_value(value, field_info['type'])
+            if field_name == 'BusinessActivityCode':
+                logger.info(f"Extracted BusinessActivityCode: {data[field_name]} from {filename}")
         else:
             logger.debug(f"Field {field_name} not found in {filename} for form type {form_type}")
 

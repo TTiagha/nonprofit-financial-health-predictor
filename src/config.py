@@ -184,10 +184,7 @@ desired_fields = {
             '//*[contains(local-name(), "PrimaryExemptPurposeTxt")]/text()'
         ]
     }
-}
-,
-    
-    
+},
     'TotalNetAssets': {
     'type': 'double',
     'paths': {
@@ -221,7 +218,35 @@ desired_fields = {
             '//*[contains(local-name(), "NetAssetsOrFundBalancesEOYAmt")]/text()',
         ]
     }
+},
+    'BusinessActivityCode': {
+        'type': 'string',
+        'paths': {
+            '990': [
+                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ActivityCd"]/text()',
+            ],
+            '990EZ': [
+                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ActivityCd"]/text()',
+            ],
+            '990PF': [
+                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ActivityCd"]/text()',
+            ],
+            '990T': [
+                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ActivityCd"]/text()',
+            ],
+            'Common': [
+                '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
+                '//*[contains(local-name(), "BusinessActivityCode")]/text()',
+                '//*[contains(local-name(), "ActivityCd")]/text()',
+            ]
+        }
+    }
 }
-
-}
-
