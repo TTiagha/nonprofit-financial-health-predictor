@@ -5,3 +5,4 @@ lxml
 pyarrow
 watchtower
 beautifulsoup4
+pandas
