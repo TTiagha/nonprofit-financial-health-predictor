@@ -220,33 +220,35 @@ desired_fields = {
     }
 },
     'BusinessActivityCode': {
-        'type': 'string',
-        'paths': {
-            '990': [
-                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
-                '//*[local-name()="BusinessActivityCode"]/text()',
-                '//*[local-name()="ActivityCd"]/text()',
-            ],
-            '990EZ': [
-                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
-                '//*[local-name()="BusinessActivityCode"]/text()',
-                '//*[local-name()="ActivityCd"]/text()',
-            ],
-            '990PF': [
-                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
-                '//*[local-name()="BusinessActivityCode"]/text()',
-                '//*[local-name()="ActivityCd"]/text()',
-            ],
-            '990T': [
-                '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
-                '//*[local-name()="BusinessActivityCode"]/text()',
-                '//*[local-name()="ActivityCd"]/text()',
-            ],
-            'Common': [
-                '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
-                '//*[contains(local-name(), "BusinessActivityCode")]/text()',
-                '//*[contains(local-name(), "ActivityCd")]/text()',
-            ]
-        }
+    'type': 'string',
+    'paths': {
+        '990': [
+            '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+            '//*[local-name()="BusinessActivityCode"]/text()',
+            '//*[local-name()="ActivityCd"]/text()',
+        ],
+        '990EZ': [
+            '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+            '//*[local-name()="BusinessActivityCode"]/text()',
+            '//*[local-name()="ActivityCd"]/text()',
+        ],
+        '990PF': [
+            '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+            '//*[local-name()="BusinessActivityCode"]/text()',
+            '//*[local-name()="ActivityCd"]/text()',
+        ],
+        '990T': [
+            '//ReturnData/*[local-name()="IRS990TScheduleA"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
+            '//*[local-name()="PrincipalBusinessActivityCd"]/text()',
+            '//*[local-name()="BusinessActivityCode"]/text()',
+            '//*[local-name()="ActivityCd"]/text()',
+        ],
+        'Common': [
+            '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
+            '//*[contains(local-name(), "BusinessActivityCode")]/text()',
+            '//*[contains(local-name(), "ActivityCd")]/text()',
+        ]
     }
+}
+
 }
