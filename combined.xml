@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Return xmlns="http://www.irs.gov/efile" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" returnVersion="2021v4.1" xsi:schemaLocation="http://www.irs.gov/efile">
+  <ReturnHeader binaryAttachmentCnt="0">
+    <ReturnTs>2023-01-15T15:31:41-08:00</ReturnTs>
+    <TaxPeriodEndDt>2022-08-31</TaxPeriodEndDt>
+    <PreparerFirmGrp>
+      <PreparerFirmEIN>203276953</PreparerFirmEIN>
+      <PreparerFirmName>
+        <BusinessNameLine1Txt>EAH CPA LLC</BusinessNameLine1Txt>
+      </PreparerFirmName>
+      <PreparerUSAddress>
+        <AddressLine1Txt>225 Ashmere Court</AddressLine1Txt>
+        <CityNm>Tyrone</CityNm>
+        <StateAbbreviationCd>GA</StateAbbreviationCd>
+        <ZIPCd>30290</ZIPCd>
+      </PreparerUSAddress>
+    </PreparerFirmGrp>
+    <ReturnTypeCd>990T</ReturnTypeCd>
+    <TaxPeriodBeginDt>2021-09-01</TaxPeriodBeginDt>
+    <Filer>
+      <EIN>581918112</EIN>
+      <BusinessName>
+        <BusinessNameLine1Txt>Fayette Thrift Shop Inc</BusinessNameLine1Txt>
+      </BusinessName>
+      <BusinessNameControlTxt>FAYE</BusinessNameControlTxt>
+      <PhoneNum>7704607199</PhoneNum>
+      <USAddress>
+        <AddressLine1Txt>PO Box 1354</AddressLine1Txt>
+        <CityNm>Fayetteville</CityNm>
+        <StateAbbreviationCd>GA</StateAbbreviationCd>
+        <ZIPCd>30214</ZIPCd>
+      </USAddress>
+    </Filer>
+    <BusinessOfficerGrp>
+      <PersonNm>Erin Skinner</PersonNm>
+      <PersonTitleTxt>Treasurer</PersonTitleTxt>
+      <SignatureDt>2023-01-15</SignatureDt>
+      <DiscussWithPaidPreparerInd>true</DiscussWithPaidPreparerInd>
+    </BusinessOfficerGrp>
+    <SigningOfficerGrp>
+      <PersonFullName>
+        <PersonFirstNm>Erin</PersonFirstNm>
+        <PersonLastNm>Skinner</PersonLastNm>
+      </PersonFullName>
+      <SSN>999009999</SSN>
+    </SigningOfficerGrp>
+    <PreparerPersonGrp>
+      <PreparerPersonNm>Eric Hinkle</PreparerPersonNm>
+      <PTIN>P00116145</PTIN>
+      <PhoneNum>4042166272</PhoneNum>
+    </PreparerPersonGrp>
+    <AdditionalFilerInformation>
+      <TrustedCustomerGrp>
+        <TrustedCustomerCd>2</TrustedCustomerCd>
+        <AuthenticationAssuranceLevelCd>AAL1</AuthenticationAssuranceLevelCd>
+        <IdentityAssuranceLevelCd>IAL1</IdentityAssuranceLevelCd>
+        <FederatedAssuranceLevelCd>FAL1</FederatedAssuranceLevelCd>
+      </TrustedCustomerGrp>
+    </AdditionalFilerInformation>
+    <TaxYr>2021</TaxYr>
+    <BuildTS>2023-03-07 01:45:13Z</BuildTS>
+  </ReturnHeader>
+  <ReturnData documentCnt="2">
+    <IRS990T documentId="IRS990T" softwareId="21013475" softwareVersionNum="2021v4.1">
+      <Organization501IndicatorGrp>
+        <Organization501Ind>X</Organization501Ind>
+        <Organization501cTypeTxt>c3</Organization501cTypeTxt>
+      </Organization501IndicatorGrp>
+      <BookValueAssetsEOYAmt>30824</BookValueAssetsEOYAmt>
+      <Organization501cCorporationInd>X</Organization501cCorporationInd>
+      <Form990TScheduleAAttachedCnt referenceDocumentId="IRS990TScheduleA.0">1</Form990TScheduleAAttachedCnt>
+      <SubsidiaryCorporationInd>false</SubsidiaryCorporationInd>
+      <BooksInCareOfDetail>
+        <PersonNm>Erin Skinner</PersonNm>
+        <USAddress>
+          <AddressLine1Txt>125 Colony Point</AddressLine1Txt>
+          <CityNm>Fayetteville</CityNm>
+          <StateAbbreviationCd>GA</StateAbbreviationCd>
+          <ZIPCd>30215</ZIPCd>
+        </USAddress>
+        <PhoneNum>4042591271</PhoneNum>
+      </BooksInCareOfDetail>
+      <SpecificDeductionAmt>1000</SpecificDeductionAmt>
+      <TotalDeductionAmt>1000</TotalDeductionAmt>
+      <TotalUBTIAmt>0</TotalUBTIAmt>
+      <TaxableCorporationAmt>0</TaxableCorporationAmt>
+      <ForeignAccountsQuestionInd>false</ForeignAccountsQuestionInd>
+      <ForeignTrustQuestionInd>false</ForeignTrustQuestionInd>
+      <TaxExemptInterestAmt>0</TaxExemptInterestAmt>
+      <ChangeInMethodOfAccountingInd>false</ChangeInMethodOfAccountingInd>
+    </IRS990T>
+    <IRS990TScheduleA documentId="IRS990TScheduleA.0" softwareId="21013475" softwareVersionNum="2021v4.1">
+      <PrincipalBusinessActivityCd>900099</PrincipalBusinessActivityCd>
+      <SequenceReferenceNum>1</SequenceReferenceNum>
+      <SequenceTotalNum>1</SequenceTotalNum>
+      <TradeOrBusinessDesc>Not applicable</TradeOrBusinessDesc>
+      <TotUnrltTrdBusIncmAmt>0</TotUnrltTrdBusIncmAmt>
+      <TotUnrltTrdBusIncmExpnssAmt>0</TotUnrltTrdBusIncmExpnssAmt>
+      <TotNetUnrltTrdBusIncmAmt>0</TotNetUnrltTrdBusIncmAmt>
+      <OthInventoryValuationMethodCd othInvntryValuationMethodDesc="LCM">OTHER APPROVED METHOD</OthInventoryValuationMethodCd>
+    </IRS990TScheduleA>
+  </ReturnData>
+</Return>
+<?xml version="1.0" encoding="utf-8"?>
+<Return xmlns="http://www.irs.gov/efile" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.irs.gov/efile" returnVersion="2021v4.3">
+  <ReturnHeader binaryAttachmentCnt="0">
+    <ReturnTs>2023-01-25T16:09:52-06:00</ReturnTs>
+    <TaxPeriodEndDt>2022-06-30</TaxPeriodEndDt>
+    <PreparerFirmGrp>
+      <PreparerFirmEIN>581763570</PreparerFirmEIN>
+      <PreparerFirmName>
+        <BusinessNameLine1Txt>JONES AND KOLB</BusinessNameLine1Txt>
+      </PreparerFirmName>
+      <PreparerUSAddress>
+        <AddressLine1Txt>3475 PIEDMONT ROAD NE SUITE 1500</AddressLine1Txt>
+        <CityNm>ATLANTA</CityNm>
+        <StateAbbreviationCd>GA</StateAbbreviationCd>
+        <ZIPCd>30305</ZIPCd>
+      </PreparerUSAddress>
+    </PreparerFirmGrp>
+    <ReturnTypeCd>990T</ReturnTypeCd>
+    <TaxPeriodBeginDt>2021-07-01</TaxPeriodBeginDt>
+    <Filer>
+      <EIN>581594490</EIN>
+      <BusinessName>
+        <BusinessNameLine1Txt>CHIRST OUR HOPE CATHOLIC CHURCH</BusinessNameLine1Txt>
+        <BusinessNameLine2Txt>LITHONIA INC</BusinessNameLine2Txt>
+      </BusinessName>
+      <BusinessNameControlTxt>CHIR</BusinessNameControlTxt>
+      <USAddress>
+        <AddressLine1Txt>1786 WELLBORN ROAD</AddressLine1Txt>
+        <CityNm>LITHONIA</CityNm>
+        <StateAbbreviationCd>GA</StateAbbreviationCd>
+        <ZIPCd>30058</ZIPCd>
+      </USAddress>
+    </Filer>
+    <BusinessOfficerGrp>
+      <PersonNm>JACK HUSACK</PersonNm>
+      <PersonTitleTxt>OFFICER</PersonTitleTxt>
+      <SignatureDt>2023-01-09</SignatureDt>
+      <DiscussWithPaidPreparerInd>1</DiscussWithPaidPreparerInd>
+    </BusinessOfficerGrp>
+    <SigningOfficerGrp>
+      <PersonFullName>
+        <PersonFirstNm>JACK</PersonFirstNm>
+        <PersonLastNm>HUSACK</PersonLastNm>
+      </PersonFullName>
+      <SSN>999009999</SSN>
+    </SigningOfficerGrp>
+    <PreparerPersonGrp>
+      <PreparerPersonNm>LAURA H HELLER</PreparerPersonNm>
+      <PTIN>P00744874</PTIN>
+      <PhoneNum>4042627920</PhoneNum>
+    </PreparerPersonGrp>
+    <AdditionalFilerInformation>
+      <TrustedCustomerGrp>
+        <TrustedCustomerCd>0</TrustedCustomerCd>
+        <AuthenticationAssuranceLevelCd>AAL1</AuthenticationAssuranceLevelCd>
+        <IdentityAssuranceLevelCd>IAL1</IdentityAssuranceLevelCd>
+      </TrustedCustomerGrp>
+    </AdditionalFilerInformation>

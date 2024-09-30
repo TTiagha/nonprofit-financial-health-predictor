@@ -29,6 +29,24 @@ def parse_return(Return, ns, filename):
         else:
             logger.debug(f"Field {field_name} not found in {filename} for form type {form_type}")
 
+        # Additional extraction attempt for BusinessActivityCode
+        if field_name == 'BusinessActivityCode' and value is None:
+            logger.debug(f"Attempting alternative extraction for BusinessActivityCode in {filename}")
+            alternative_paths = [
+                '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
+                '//*[contains(local-name(), "BusinessActivityCode")]/text()',
+                '//*[contains(local-name(), "ActivityCd")]/text()',
+            ]
+            for path in alternative_paths:
+                try:
+                    value = Return.xpath(path, namespaces=ns)
+                    if value:
+                        data[field_name] = convert_value(value[0], field_info['type'])
+                        logger.info(f"Extracted BusinessActivityCode using alternative path: {data[field_name]} from {filename}")
+                        break
+                except Exception as e:
+                    logger.error(f"Error extracting BusinessActivityCode using alternative path in {filename}: {str(e)}")
+
     logger.info(f"Extracted {len(data)} fields from {filename}")
     logger.debug(f"Extracted fields from {filename}: {', '.join(data.keys())}")
     missing_fields = set(desired_fields.keys()) - set(data.keys())

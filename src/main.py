@@ -299,6 +299,8 @@ def main():
         # Log BusinessActivityCode statistics
         business_activity_codes = [r.get('BusinessActivityCode') for r in all_records if 'BusinessActivityCode' in r]
         logger.info(f"BusinessActivityCode: found in {len(business_activity_codes)}/{len(all_records)} records")
+        extraction_rate = (len(business_activity_codes) / len(all_records)) * 100
+        logger.info(f"BusinessActivityCode extraction rate: {extraction_rate:.2f}%")
         if business_activity_codes:
             valid_codes = [code for code in business_activity_codes if code]
             if valid_codes:
