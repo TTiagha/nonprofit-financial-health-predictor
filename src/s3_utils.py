@@ -1,9 +1,15 @@
 # s3_utils.py
 
-from config import s3_client, S3_BUCKET
+import boto3
+from config import S3_BUCKET
 from logger import logger
 import botocore.exceptions
 from io import BytesIO
+
+def get_s3_client():
+    return boto3.client('s3')
+
+s3_client = get_s3_client()
 
 def upload_file_to_s3(file_content, s3_key):
     try:
