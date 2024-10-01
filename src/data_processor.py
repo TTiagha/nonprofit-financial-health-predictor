@@ -20,6 +20,9 @@ def process_xml_files(xml_files, state_filter):
     no_bac_files = {}
     start_time = time.time()
 
+    total_returns_processed = 0
+    total_returns_with_bac = 0
+
     for filename, xml_content in xml_files.items():
         file_start_time = time.time()
         logger.info(f'Processing {filename}')
@@ -37,19 +40,19 @@ def process_xml_files(xml_files, state_filter):
             file_missing_assets = False
             file_missing_net_assets = False
             file_missing_bac = False
-            returns_processed = 0
-            returns_with_bac = 0
+            returns_processed_in_file = 0
+            returns_with_bac_in_file = 0
 
             for i, Return in enumerate(Returns):
                 logger.info(f'Processing Return {i+1} in {filename}')
+                total_returns_processed += 1
+                returns_processed_in_file += 1
                 try:
                     data = parse_return(Return, ns, filename)
                     if data and is_state_nonprofit(data, state_filter):
                         records.append(data)
                         state_files.add(filename)
                         logger.info(f"{state_filter} nonprofit found in {filename}, Return {i+1}")
-
-                        returns_processed += 1
 
                         if 'TotalRevenue' not in data or data['TotalRevenue'] is None:
                             file_missing_revenue = True
@@ -60,24 +63,24 @@ def process_xml_files(xml_files, state_filter):
                         if 'TotalNetAssets' not in data or data['TotalNetAssets'] is None:
                             file_missing_net_assets = True
                         
-                        # More detailed logging for BusinessActivityCode
-                        bac_xpath = './/irs:BusinessActivityCode'
-                        bac_element = Return.xpath(bac_xpath, namespaces=ns)
-                        if not bac_element:
+                        # Use the extracted data to check for BusinessActivityCode
+                        if 'BusinessActivityCode' in data and data['BusinessActivityCode']:
+                            total_returns_with_bac += 1
+                            returns_with_bac_in_file += 1
+                            logger.info(f"BusinessActivityCode found in {filename}, Return {i+1}: {data.get('BusinessActivityCode')}")
+                        else:
                             logger.warning(f"BusinessActivityCode not found in {filename}, Return {i+1}")
                             file_missing_bac = True
                             # Log a sample of the XML content
                             xml_sample = etree.tostring(Return, pretty_print=True, encoding='unicode')[:500]
                             logger.debug(f"XML sample for Return {i+1} without BusinessActivityCode:\n{xml_sample}")
-                        else:
-                            returns_with_bac += 1
-                            logger.info(f"BusinessActivityCode found in {filename}, Return {i+1}: {data.get('BusinessActivityCode')}")
-
+                    else:
+                        logger.info(f"Return {i+1} in {filename} does not meet criteria (invalid data or wrong state)")
                 except Exception as e:
                     logger.error(f'Error processing Return {i+1} in {filename}: {e}')
 
-            logger.info(f"Processed {returns_processed} Returns in {filename}")
-            logger.info(f"Returns with BusinessActivityCode: {returns_with_bac}/{returns_processed}")
+            logger.info(f"Processed {returns_processed_in_file} Returns in {filename}")
+            logger.info(f"Returns with BusinessActivityCode: {returns_with_bac_in_file}/{returns_processed_in_file}")
 
             if file_missing_revenue:
                 no_revenue_files.add(filename)
@@ -98,6 +101,8 @@ def process_xml_files(xml_files, state_filter):
 
     end_time = time.time()
     logger.info(f'Processed {len(records)} {state_filter} nonprofit records from {len(xml_files)} files in {end_time - start_time:.2f} seconds')
+    logger.info(f'Total Returns processed: {total_returns_processed}')
+    logger.info(f'Total Returns with BusinessActivityCode: {total_returns_with_bac}/{total_returns_processed}')
     logger.info(f'Files without TotalRevenue: {len(no_revenue_files)}')
     logger.info(f'Files without TotalExpenses: {len(no_exp_files)}')
     logger.info(f'Files without TotalAssets: {len(no_ass_files)}')
