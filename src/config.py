@@ -25,13 +25,13 @@ desired_fields = {
         }
     },
     'EIN': {
-        'type': 'string',  # Changed from 'int' to 'string'
-        'paths': {
-            'Common': [
-                'irs:ReturnHeader/irs:Filer/irs:EIN/text()'
-            ]
-        }
-    },
+    'type': 'string',  # Changed from 'int' to 'string'
+    'paths': {
+        'Common': [
+            'irs:ReturnHeader/irs:Filer/irs:EIN/text()'
+        ]
+    }
+},
     'TaxYear': {  # Changed from 'TaxYr' to 'TaxYear'
         'type': 'int',
         'paths': {
@@ -182,36 +182,57 @@ desired_fields = {
         }
     },
     'BusinessActivityCode': {
-        'type': 'string',
-        'paths': {
-            '990': [
-                'irs:ReturnHeader/irs:BusinessOfficerGrp/irs:PrincipalBusinessActivityCd/text()',
-                'irs:ReturnData/irs:IRS990/irs:PrincipalBusinessActivityCd/text()',
-                'irs:ReturnData/irs:IRS990/irs:BusinessActivityCode/text()',
-                'irs:ReturnData/irs:IRS990/irs:ProgramServiceAccomplishmentGrp/irs:ActivityCd/text()',
-            ],
-            '990EZ': [
-                'irs:ReturnHeader/irs:BusinessOfficerGrp/irs:PrincipalBusinessActivityCd/text()',
-                'irs:ReturnData/irs:IRS990EZ/irs:PrincipalBusinessActivityCd/text()',
-                'irs:ReturnData/irs:IRS990EZ/irs:BusinessActivityCode/text()',
-            ],
-            '990PF': [
-                'irs:ReturnHeader/irs:BusinessOfficerGrp/irs:PrincipalBusinessActivityCd/text()',
-                'irs:ReturnData/irs:IRS990PF/irs:PrincipalBusinessActivityCd/text()',
-                'irs:ReturnData/irs:IRS990PF/irs:BusinessActivityCode/text()',
-            ],
-            '990T': [
-                'irs:ReturnData/irs:IRS990T/irs:PrincipalBusinessActivityCd/text()',
-                'irs:ReturnData/irs:IRS990T/irs:BusinessActivityCode/text()',
-                'irs:ReturnData/irs:IRS990T/irs:IRS990TScheduleA/irs:PrincipalBusinessActivityCd/text()',
-            ],
-            'Common': [
-                'irs:ReturnHeader/irs:PrincipalBusinessActivityCd/text()',
-                'irs:ReturnHeader/irs:BusinessActivityCode/text()',
-                '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
-                '//*[contains(local-name(), "BusinessActivityCode")]/text()',
-                '//*[contains(local-name(), "ActivityCd")]/text()',
-            ]
-        }
+    'type': 'string',
+    'paths': {
+        '990': [
+            # Existing paths
+            'irs:ReturnData/irs:IRS990/irs:PrincipalBusinessActivityCd/text()',
+            'irs:ReturnData/irs:IRS990/irs:BusinessActivityCode/text()',
+            'irs:ReturnData/irs:IRS990/irs:ProgramServiceAccomplishmentGrp/irs:ActivityCd/text()',
+            # Additional paths
+            'irs:ReturnData/irs:IRS990/irs:MissionDesc/text()',
+            'irs:ReturnData/irs:IRS990/irs:ActivityOrMissionDesc/text()',
+            'irs:ReturnData/irs:IRS990/irs:MissionStatementTxt/text()',
+            'irs:ReturnData/irs:IRS990/irs:PrimaryExemptPurposeTxt/text()',
+        ],
+        '990EZ': [
+            # Existing paths
+            'irs:ReturnData/irs:IRS990EZ/irs:PrincipalBusinessActivityCd/text()',
+            'irs:ReturnData/irs:IRS990EZ/irs:BusinessActivityCode/text()',
+            'irs:ReturnData/irs:IRS990EZ/irs:ActivityCd/text()',
+            # Additional paths
+            'irs:ReturnData/irs:IRS990EZ/irs:MissionDescription/text()',
+            'irs:ReturnData/irs:IRS990EZ/irs:PrimaryExemptPurposeTxt/text()',
+        ],
+        '990PF': [
+            # Existing paths
+            'irs:ReturnData/irs:IRS990PF/irs:PrincipalBusinessActivityCd/text()',
+            'irs:ReturnData/irs:IRS990PF/irs:BusinessActivityCode/text()',
+            'irs:ReturnData/irs:IRS990PF/irs:ActivityCd/text()',
+            # Additional paths
+            'irs:ReturnData/irs:IRS990PF/irs:PrimaryExemptPurposeTxt/text()',
+        ],
+        '990T': [
+            # Existing paths
+            'irs:ReturnData/irs:IRS990T/irs:PrincipalBusinessActivityCd/text()',
+            'irs:ReturnData/irs:IRS990T/irs:BusinessActivityCode/text()',
+            # Additional paths
+            'irs:ReturnData/irs:IRS990T/irs:MissionDescription/text()',
+        ],
+        'Common': [
+            # Existing paths
+            'irs:ReturnHeader/irs:PrincipalBusinessActivityCd/text()',
+            'irs:ReturnHeader/irs:BusinessActivityCode/text()',
+            '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
+            '//*[contains(local-name(), "BusinessActivityCode")]/text()',
+            '//*[contains(local-name(), "ActivityCd")]/text()',
+            # Additional paths
+            '//*[contains(local-name(), "MissionDesc")]/text()',
+            '//*[contains(local-name(), "ActivityOrMissionDesc")]/text()',
+            '//*[contains(local-name(), "MissionStatement")]/text()',
+            '//*[contains(local-name(), "PrimaryExemptPurposeTxt")]/text()',
+        ]
     }
+},
+
 }
