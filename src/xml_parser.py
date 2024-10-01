@@ -6,7 +6,14 @@ from config import desired_fields
 from utils import convert_value, detect_form_type
 import re
 
-# xml_parser.py
+# Enhanced namespace dictionary
+namespaces = {
+    'irs': 'http://www.irs.gov/efile',
+    'efile': 'http://www.irs.gov/efile',
+    'ns': 'http://www.irs.gov/efile',
+    'ef': 'http://www.irs.gov/efile',
+    # Add other namespaces as needed
+}
 
 def extract_field(element, field_name, namespaces):
     field_info = desired_fields.get(field_name, {})
@@ -40,7 +47,6 @@ def extract_field(element, field_name, namespaces):
 
     logger.warning(f"{field_name} not found using provided paths.")
     return None
-
 
 def parse_return(Return, namespaces, filename):
     data = {}

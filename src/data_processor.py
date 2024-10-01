@@ -48,6 +48,7 @@ def process_xml_files(xml_files, state_filter):
                 total_returns_processed += 1
                 returns_processed_in_file += 1
                 try:
+                    # Pass the ns dictionary to parse_return
                     data = parse_return(Return, ns, filename)
                     if data and is_state_nonprofit(data, state_filter):
                         records.append(data)
