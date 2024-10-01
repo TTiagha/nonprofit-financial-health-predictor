@@ -4,6 +4,10 @@ from lxml import etree
 from logger import logger
 from config import desired_fields
 from utils import convert_value, detect_form_type
+from business_activity_code_mapper import BusinessActivityCodeMapper
+
+# Initialize the BusinessActivityCode mapper
+bac_mapper = BusinessActivityCodeMapper()
 
 def extract_field(element, field_name, namespaces):
     field_info = desired_fields.get(field_name, {})
@@ -72,6 +76,17 @@ def parse_return(Return, namespaces, filename):
             logger.debug(f"Extracted {field_name}: {data[field_name]} from {filename} using path: {path}")
         else:
             logger.debug(f"Field {field_name} not found in {filename} for form type {form_type}")
+
+    # Map BusinessActivityCode to its description
+    bac_code = data.get('BusinessActivityCode')
+    if bac_code:
+        bac_description = bac_mapper.get_description(bac_code)
+        if bac_description:
+            data['BusinessActivityCodeDescription'] = bac_description
+            logger.debug(f"Mapped BusinessActivityCode {bac_code} to '{bac_description}'")
+        else:
+            logger.warning(f"No description found for BusinessActivityCode {bac_code} in {filename}")
+            data['BusinessActivityCodeDescription'] = 'Unknown'
 
     # Check for missing critical fields
     if 'EIN' not in data or not str(data['EIN']).isdigit():

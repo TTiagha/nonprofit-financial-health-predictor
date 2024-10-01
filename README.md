@@ -16,11 +16,23 @@ This project aims to develop a predictive model for assessing the financial heal
 
 ## Recent Updates
 
-- The original master file has been broken down into smaller, more manageable files for better organization and maintainability.
-- The application now allows users to specify the state to filter for and input multiple URLs for processing.
-- Implemented CloudWatch logging for specific, important log messages.
-- Removed local file logging to health.log.
-- Added new990.py script for automated tracking of new IRS Form 990 XML file releases.
+- Added business activity code field to data processing script
+- Improved XML parsing robustness using namespace-agnostic XPath expressions
+- The original master file has been broken down into smaller, more manageable files for better organization and maintainability
+- The application now allows users to specify the state to filter for and input multiple URLs for processing
+- Implemented CloudWatch logging for specific, important log messages
+- Removed local file logging to health.log
+- Added new990.py script for automated tracking of new IRS Form 990 XML file releases
+
+## Data Processing Insights
+
+We've learned the importance of using local-name() in XPath expressions when parsing XML files. This approach makes our expressions more namespace-agnostic, increasing extraction rates and improving the robustness of our data processing pipeline. For example:
+
+```python
+//*[local-name()="TotalAssetsEOYAmt"]/text()
+```
+
+This method allows our parser to find the correct elements regardless of namespace prefixes, making our code more adaptable to variations in XML structure.
 
 ## Tech Stack
 
@@ -177,6 +189,8 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 - CloudWatch logging for important messages has been implemented.
 - Local file logging has been removed.
 - Automated tracking of new IRS Form 990 XML file releases is implemented.
+- Business activity code field has been added to data processing.
+- XML parsing has been improved with namespace-agnostic XPath expressions.
 
 ## Next Steps
 
