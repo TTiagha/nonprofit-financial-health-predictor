@@ -3,70 +3,68 @@
 from lxml import etree
 from logger import logger
 from config import desired_fields
-from utils import extract_field, convert_value, detect_form_type
+from utils import convert_value, detect_form_type
 import re
 
-def parse_return(Return, ns, filename):
-    # Correct namespace mapping
-    ns = {'irs': 'http://www.irs.gov/efile'}
+def extract_field(element, field_name, namespaces):
+    field_info = desired_fields.get(field_name, {})
+    paths = field_info.get('paths', {}).get('Common', [])
+    # Include form-specific paths if available
+    form_type = detect_form_type(element, namespaces)
+    if form_type in field_info['paths']:
+        paths = field_info['paths'][form_type] + paths  # Form-specific paths take precedence
 
-    form_type = detect_form_type(Return, ns)
+    for path in paths:
+        try:
+            result = element.xpath(path, namespaces=namespaces)
+            if result:
+                # If multiple results, join them (if appropriate) or take the first
+                value = result[0].strip() if isinstance(result[0], str) else str(result[0])
+                logger.debug(f"Found {field_name} using path '{path}': {value}")
+                return value
+            else:
+                logger.debug(f"No result for path '{path}' while extracting {field_name}.")
+        except Exception as e:
+            logger.error(f"Error extracting {field_name} using path '{path}': {str(e)}")
+
+    logger.warning(f"{field_name} not found using provided paths.")
+    return None
+
+def parse_return(Return, namespaces, filename):
+    data = {}
+    form_type = detect_form_type(Return, namespaces)
     logger.info(f"Detected form type for {filename}: {form_type}")
-    data = {'FormType': form_type}
+    data['FormType'] = form_type
 
-    # Add state extraction
-    state_paths = desired_fields['State']['paths']['Common']
-    state = extract_field(Return, state_paths, ns, 'State', data)
-    if state:
-        data['State'] = state
-
-    for field_name, field_info in desired_fields.items():
-        field_paths = field_info['paths'].get(form_type, field_info['paths'].get('Common', []))
-        value = extract_field(Return, field_paths, ns, field_name, data)
+    # Extract fields defined in desired_fields
+    for field_name in desired_fields.keys():
+        value = extract_field(Return, field_name, namespaces)
         if value is not None:
+            field_info = desired_fields[field_name]
             data[field_name] = convert_value(value, field_info['type'])
+            logger.debug(f"Extracted {field_name}: {data[field_name]} from {filename}")
             if field_name == 'BusinessActivityCode':
                 logger.info(f"Extracted BusinessActivityCode: {data[field_name]} from {filename}")
         else:
             logger.debug(f"Field {field_name} not found in {filename} for form type {form_type}")
 
-        # Additional extraction attempt for BusinessActivityCode
-        if field_name == 'BusinessActivityCode' and value is None:
-            logger.debug(f"Attempting alternative extraction for BusinessActivityCode in {filename}")
-            alternative_paths = [
-                '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
-                '//*[contains(local-name(), "BusinessActivityCode")]/text()',
-                '//*[contains(local-name(), "ActivityCd")]/text()',
-            ]
-            for path in alternative_paths:
-                try:
-                    value = Return.xpath(path, namespaces=ns)
-                    if value:
-                        data[field_name] = convert_value(value[0], field_info['type'])
-                        logger.info(f"Extracted BusinessActivityCode using alternative path: {data[field_name]} from {filename}")
-                        break
-                except Exception as e:
-                    logger.error(f"Error extracting BusinessActivityCode using alternative path in {filename}: {str(e)}")
-
     # Explicit handling for TaxYear
-    tax_year = data.get('TaxYear')
-    if tax_year is None:
+    if 'TaxYear' not in data or data['TaxYear'] is None:
         # Try to extract year from TaxPeriodEndDt
-        tax_period_end_dt = extract_field(Return, ['irs:ReturnHeader/irs:TaxPeriodEndDt/text()'], ns, 'TaxPeriodEndDt', data)
+        tax_period_end_dt = extract_field(Return, 'TaxPeriodEndDt', namespaces)
         if tax_period_end_dt:
             match = re.search(r'\d{4}', tax_period_end_dt)
             if match:
                 tax_year = int(match.group())
+                data['TaxYear'] = tax_year
                 logger.info(f"Extracted TaxYear {tax_year} from TaxPeriodEndDt in {filename}")
             else:
                 logger.warning(f"Could not extract year from TaxPeriodEndDt: {tax_period_end_dt} in {filename}")
         else:
             logger.warning(f"TaxYear and TaxPeriodEndDt not found in {filename}")
 
-    if tax_year is not None:
-        data['TaxYear'] = tax_year
-    else:
-        # If we still can't determine the tax year, use a default or skip the record
+    if 'TaxYear' not in data or data['TaxYear'] is None:
+        # If we still can't determine the tax year, skip the record
         logger.error(f"Could not determine TaxYear for {filename}. Skipping record.")
         return None
 
