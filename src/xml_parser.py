@@ -6,6 +6,8 @@ from config import desired_fields
 from utils import convert_value, detect_form_type
 import re
 
+# xml_parser.py
+
 def extract_field(element, field_name, namespaces):
     field_info = desired_fields.get(field_name, {})
     paths_info = field_info.get('paths', {})
@@ -21,6 +23,7 @@ def extract_field(element, field_name, namespaces):
 
     for path in paths:
         try:
+            # Ensure paths are flexible with namespaces
             result = element.xpath(path, namespaces=namespaces)
             if result:
                 # Handle cases where the result is an element or a string
@@ -37,6 +40,7 @@ def extract_field(element, field_name, namespaces):
 
     logger.warning(f"{field_name} not found using provided paths.")
     return None
+
 
 def parse_return(Return, namespaces, filename):
     data = {}

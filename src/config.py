@@ -114,20 +114,25 @@ desired_fields = {
             '990': [
                 'irs:ReturnData/irs:IRS990/irs:BalanceSheetGrp/irs:TotalAssetsEOYAmt/text()',
                 'irs:ReturnData/irs:IRS990/irs:BalanceSheet/irs:TotalAssetsEOYAmt/text()',
+                'irs:ReturnData/irs:IRS990/irs:Form990TotalAssetsGrp/irs:TotalAssetsAmt/text()',  # Added
             ],
             '990EZ': [
                 'irs:ReturnData/irs:IRS990EZ/irs:TotalAssetsEOYAmt/text()',
+                'irs:ReturnData/irs:IRS990EZ/irs:Form990TotalAssetsGrp/irs:TotalAssetsAmt/text()',  # Added
             ],
             '990PF': [
                 'irs:ReturnData/irs:IRS990PF/irs:FMVAssetsEOYAmt/text()',
                 'irs:ReturnData/irs:IRS990PF/irs:BalanceSheets/irs:TotalAssetsEOYAmt/text()',
+                'irs:ReturnData/irs:IRS990PF/irs:Form990TotalAssetsGrp/irs:TotalAssetsAmt/text()',  # Added
             ],
             '990T': [
                 'irs:ReturnData/irs:IRS990T/irs:BalanceSheet/irs:TotalAssetsEOYAmt/text()',
+                'irs:ReturnData/irs:IRS990T/irs:Form990TotalAssetsGrp/irs:TotalAssetsAmt/text()',  # Added
             ],
             'Common': [
                 '//*[contains(local-name(), "TotalAssets") and contains(local-name(), "EOY")]/text()',
                 '//*[contains(local-name(), "AssetsEOY")]/text()',
+                '//*[contains(local-name(), "Form990TotalAssetsGrp")]//*[contains(local-name(), "TotalAssets")]/text()',  # Added
             ]
         }
     },
