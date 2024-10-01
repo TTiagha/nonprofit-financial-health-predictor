@@ -8,18 +8,26 @@ import re
 
 def extract_field(element, field_name, namespaces):
     field_info = desired_fields.get(field_name, {})
-    paths = field_info.get('paths', {}).get('Common', [])
+    paths_info = field_info.get('paths', {})
+    if not paths_info:
+        logger.warning(f"No paths defined for field '{field_name}'. Skipping extraction.")
+        return None
+
+    paths = paths_info.get('Common', [])
     # Include form-specific paths if available
     form_type = detect_form_type(element, namespaces)
-    if form_type in field_info['paths']:
-        paths = field_info['paths'][form_type] + paths  # Form-specific paths take precedence
+    if form_type in paths_info:
+        paths = paths_info[form_type] + paths  # Form-specific paths take precedence
 
     for path in paths:
         try:
             result = element.xpath(path, namespaces=namespaces)
             if result:
-                # If multiple results, join them (if appropriate) or take the first
-                value = result[0].strip() if isinstance(result[0], str) else str(result[0])
+                # Handle cases where the result is an element or a string
+                if isinstance(result[0], etree._Element):
+                    value = result[0].text.strip()
+                else:
+                    value = str(result[0]).strip()
                 logger.debug(f"Found {field_name} using path '{path}': {value}")
                 return value
             else:
@@ -41,6 +49,9 @@ def parse_return(Return, namespaces, filename):
         value = extract_field(Return, field_name, namespaces)
         if value is not None:
             field_info = desired_fields[field_name]
+            # Handle special case for 'EIN' to remove hyphens
+            if field_name == 'EIN':
+                value = value.replace('-', '')
             data[field_name] = convert_value(value, field_info['type'])
             logger.debug(f"Extracted {field_name}: {data[field_name]} from {filename}")
             if field_name == 'BusinessActivityCode':
@@ -50,7 +61,7 @@ def parse_return(Return, namespaces, filename):
 
     # Explicit handling for TaxYear
     if 'TaxYear' not in data or data['TaxYear'] is None:
-        # Try to extract year from TaxPeriodEndDt
+        # Try to extract 'TaxPeriodEndDt' and parse year
         tax_period_end_dt = extract_field(Return, 'TaxPeriodEndDt', namespaces)
         if tax_period_end_dt:
             match = re.search(r'\d{4}', tax_period_end_dt)
@@ -68,19 +79,10 @@ def parse_return(Return, namespaces, filename):
         logger.error(f"Could not determine TaxYear for {filename}. Skipping record.")
         return None
 
-    logger.info(f"Extracted {len(data)} fields from {filename}")
-    logger.debug(f"Extracted fields from {filename}: {', '.join(data.keys())}")
-    missing_fields = set(desired_fields.keys()) - set(data.keys())
-
-    if missing_fields:
-        logger.debug(f"Missing fields from {filename}: {', '.join(missing_fields)}")
-    if 'TotalRevenue' not in data:
-        logger.warning(f"Critical field 'TotalRevenue' missing in {filename}")
-    if 'TotalExpenses' not in data:
-        logger.warning(f"Critical field 'TotalExpenses' missing in {filename}")
-    if 'EIN' in data and not str(data['EIN']).isdigit():
-        logger.warning(f"Invalid EIN format in {filename}")
-        return None  # Return None for invalid data
+    # Check for missing critical fields
+    if 'EIN' not in data or not str(data['EIN']).isdigit():
+        logger.warning(f"Invalid or missing EIN in {filename}. Skipping record.")
+        return None
 
     data['_source_file'] = filename
     return data if len(data) > 1 else None
