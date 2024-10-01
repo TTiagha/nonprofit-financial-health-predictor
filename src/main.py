@@ -247,17 +247,20 @@ def main():
         total_files_processed = 0
         start_time = time.time()
         
-        files_without_BAC = {}
+        files_without_BAC = {}  # Initialized as a dictionary
         
         for url in urls:
             logger.info(f"Processing URL: {url}")
             xml_files = download_and_extract_xml_files(url)
             records, no_BAC_files = process_xml_files(xml_files, state_filter)
             all_records.extend(records)
-            files_without_BAC.extend(no_BAC_files)
+            files_without_BAC.update(no_BAC_files)  # Use update() instead of extend()
             total_files_processed += len(xml_files)
             
             logger.info(f"Files processed from this URL: {len(xml_files)}")
+
+        # Rest of your code...
+
     
         end_time = time.time()
         processing_time = end_time - start_time
