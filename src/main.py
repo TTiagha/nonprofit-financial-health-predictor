@@ -111,6 +111,16 @@ AVAILABLE_URLS = {
 
 }
 
+
+def upload_xml_content_to_s3(xml_content, s3_key):
+    try:
+        file_size = len(xml_content)
+        logger.info(f"Attempting to upload XML content (Size: {file_size} bytes)")
+        upload_file_to_s3(xml_content, s3_key)
+        logger.info(f"Successfully uploaded XML content to S3: {s3_key}")
+    except Exception as e:
+        logger.error(f"Error uploading XML content to S3: {str(e)}")
+
 def run_new990_check():
     logger.info("Running new990.py to check for updates...")
     try:
@@ -237,7 +247,7 @@ def main():
         total_files_processed = 0
         start_time = time.time()
         
-        files_without_BAC = []
+        files_without_BAC = {}
         
         for url in urls:
             logger.info(f"Processing URL: {url}")
@@ -255,11 +265,10 @@ def main():
     
         logger.info(f"Uploading files without BusinessActivityCode to S3 (max 20 files)")
         logger.info(f"Total files without BAC: {len(files_without_BAC)}")
-        for i, file_path in enumerate(files_without_BAC[:20]):
-            file_name = os.path.basename(file_path)
-            s3_key = f"{S3_FOLDER}/noBAC/{file_name}"
+        for i, (file_name, xml_content) in enumerate(files_without_BAC.items()):
+            s3_key = f"{S3_FOLDER}/NoBac/{file_name}"
             logger.info(f"Attempting to upload file {i+1}: {file_name}")
-            upload_file_to_s3_noBAC(file_path, s3_key)
+            upload_xml_content_to_s3(xml_content, s3_key)
             if i == 19:
                 break
     

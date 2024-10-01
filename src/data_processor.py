@@ -17,7 +17,7 @@ def process_xml_files(xml_files, state_filter):
     no_exp_files = set()
     no_ass_files = set()
     no_nass_files = set()
-    no_bac_files = set()
+    no_bac_files = {}
     start_time = time.time()
 
     for filename, xml_content in xml_files.items():
@@ -88,7 +88,7 @@ def process_xml_files(xml_files, state_filter):
             if file_missing_net_assets:
                 no_nass_files.add(filename)
             if file_missing_bac:
-                no_bac_files.add(filename)
+                no_bac_files[filename] = xml_content
 
         except Exception as e:
             logger.error(f'Error processing {filename}: {e}')
@@ -109,4 +109,4 @@ def process_xml_files(xml_files, state_filter):
     else:
         logger.warning("No valid nonprofit records processed.")
 
-    return records, list(no_bac_files)
+    return records, no_bac_files
