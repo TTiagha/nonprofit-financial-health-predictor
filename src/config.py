@@ -18,35 +18,35 @@ desired_fields = {
         'type': 'string',
         'paths': {
             'Common': [
-                'irs:ReturnHeader/irs:Filer/irs:USAddress/irs:StateAbbreviationCd/text()',
-                'irs:ReturnHeader/irs:Filer/irs:BusinessOfficeGrp/irs:USAddress/irs:StateAbbreviationCd/text()',
+                '//*[local-name()="ReturnHeader"]/*[local-name()="Filer"]/*[local-name()="USAddress"]/*[local-name()="StateAbbreviationCd"]/text()',
+                '//*[local-name()="ReturnHeader"]/*[local-name()="Filer"]/*[local-name()="BusinessOfficeGrp"]/*[local-name()="USAddress"]/*[local-name()="StateAbbreviationCd"]/text()',
                 '//*[contains(local-name(), "StateAbbreviationCd")]/text()'
             ]
         }
     },
     'EIN': {
-    'type': 'string',  # Changed from 'int' to 'string'
-    'paths': {
-        'Common': [
-            'irs:ReturnHeader/irs:Filer/irs:EIN/text()'
-        ]
-    }
-},
-    'TaxYear': {  # Changed from 'TaxYr' to 'TaxYear'
-        'type': 'int',
-        'paths': {
-            'Common': [
-                'irs:ReturnHeader/irs:TaxYr/text()',
-                'irs:ReturnHeader/irs:TaxYear/text()',
-                'substring(irs:ReturnHeader/irs:TaxPeriodEndDt/text(),1,4)'
-            ]
-        }
-    },
-    'TaxPeriodEndDt': {  # Added 'TaxPeriodEndDt'
         'type': 'string',
         'paths': {
             'Common': [
-                'irs:ReturnHeader/irs:TaxPeriodEndDt/text()',
+                '//*[local-name()="ReturnHeader"]/*[local-name()="Filer"]/*[local-name()="EIN"]/text()'
+            ]
+        }
+    },
+    'TaxYear': {
+        'type': 'int',
+        'paths': {
+            'Common': [
+                '//*[local-name()="ReturnHeader"]/*[local-name()="TaxYr"]/text()',
+                '//*[local-name()="ReturnHeader"]/*[local-name()="TaxYear"]/text()',
+                'substring(//*[local-name()="ReturnHeader"]/*[local-name()="TaxPeriodEndDt"]/text(),1,4)'
+            ]
+        }
+    },
+    'TaxPeriodEndDt': {
+        'type': 'string',
+        'paths': {
+            'Common': [
+                '//*[local-name()="ReturnHeader"]/*[local-name()="TaxPeriodEndDt"]/text()',
             ]
         }
     },
@@ -54,8 +54,8 @@ desired_fields = {
         'type': 'string',
         'paths': {
             'Common': [
-                'irs:ReturnHeader/irs:Filer/irs:BusinessName/irs:BusinessNameLine1Txt/text()',
-                'irs:ReturnHeader/irs:Filer/irs:Name/irs:BusinessNameLine1Txt/text()'
+                '//*[local-name()="ReturnHeader"]/*[local-name()="Filer"]/*[local-name()="BusinessName"]/*[local-name()="BusinessNameLine1Txt"]/text()',
+                '//*[local-name()="ReturnHeader"]/*[local-name()="Filer"]/*[local-name()="Name"]/*[local-name()="BusinessNameLine1Txt"]/text()'
             ]
         }
     },
@@ -63,20 +63,20 @@ desired_fields = {
         'type': 'double',
         'paths': {
             '990': [
-                'irs:ReturnData/irs:IRS990/irs:TotalRevenueAmt/text()',
-                'irs:ReturnData/irs:IRS990/irs:Revenue/irs:TotalRevenueAmt/text()',
-                'irs:ReturnData/irs:IRS990/irs:Revenue/irs:TotalRevenueColumnAmt/text()',
-                'irs:ReturnData/irs:IRS990/irs:Form990PartVIII/irs:TotalRevenueColumnAmt/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="TotalRevenueAmt"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="Revenue"]/*[local-name()="TotalRevenueAmt"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="Revenue"]/*[local-name()="TotalRevenueColumnAmt"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="Form990PartVIII"]/*[local-name()="TotalRevenueColumnAmt"]/text()',
             ],
             '990EZ': [
-                'irs:ReturnData/irs:IRS990EZ/irs:TotalRevenueAmt/text()'
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="TotalRevenueAmt"]/text()'
             ],
             '990PF': [
-                'irs:ReturnData/irs:IRS990PF/irs:TotalRevenueAndExpensesAmt/text()',
-                'irs:ReturnData/irs:IRS990PF/irs:AnalysisOfRevenueAndExpenses/irs:TotalRevAndExpnssAmt/text()'
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990PF"]/*[local-name()="TotalRevenueAndExpensesAmt"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990PF"]/*[local-name()="AnalysisOfRevenueAndExpenses"]/*[local-name()="TotalRevAndExpnssAmt"]/text()'
             ],
             '990T': [
-                'irs:ReturnData/irs:IRS990T/irs:TotalUBTIAmt/text()'
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990T"]/*[local-name()="TotalUBTIAmt"]/text()'
             ],
             'Common': [
                 '//*[contains(local-name(), "TotalRevenue")]/text()',
@@ -87,20 +87,30 @@ desired_fields = {
         'type': 'double',
         'paths': {
             '990': [
-                'irs:ReturnData/irs:IRS990/irs:TotalFunctionalExpensesGrp/irs:TotalAmt/text()',
-                'irs:ReturnData/irs:IRS990/irs:StatementOfFunctionalExpenses/irs:TotalFunctionalExpensesAmt/text()',
-                'irs:ReturnData/irs:IRS990/irs:StatementOfFunctionalExpenses/irs:TotalAmt/text()',
+                '//*[local-name()="TotalFunctionalExpensesAmt"]/text()',
+                '//*[local-name()="TotalExpensesAmt"]/text()',
+                '//*[local-name()="TotalFunctionalExpenses"]/text()',
+                '//*[local-name()="TotalExpenses"]/text()',
+                '//*[contains(local-name(), "TotalFunctionalExpenses") or contains(local-name(), "TotalExpenses")]/text()',
             ],
             '990EZ': [
-                'irs:ReturnData/irs:IRS990EZ/irs:TotalExpensesAmt/text()'
+                '//*[local-name()="TotalExpensesAmt"]/text()',
+                '//*[local-name()="TotalExpenses"]/text()',
+                '//*[contains(local-name(), "TotalExpenses")]/text()',
             ],
             '990PF': [
-                'irs:ReturnData/irs:IRS990PF/irs:TotalExpensesAndDisbursementsAmt/text()',
-                'irs:ReturnData/irs:IRS990PF/irs:AnalysisOfRevenueAndExpenses/irs:TotalExpensesAmt/text()'
+                '//*[local-name()="TotalExpensesAndDisbursementsAmt"]/text()',
+                '//*[local-name()="TotalExpensesRevAndExpnssAmt"]/text()',
+                '//*[local-name()="TotalExpenses"]/text()',
+                '//*[contains(local-name(), "TotalExpenses")]/text()',
             ],
             '990T': [
-                'irs:ReturnData/irs:IRS990T/irs:TotalExpensesAmt/text()',
-                'irs:ReturnData/irs:IRS990T/irs:TotalDeductionsAmt/text()',
+                '//*[local-name()="TotalDeductionAmt"]/text()',
+                '//*[local-name()="TotalDeductionsAmt"]/text()',
+                '//*[local-name()="TotalDeductions"]/text()',
+                '//*[local-name()="TotalDeduction"]/text()',
+                '//*[local-name()="TotalExpenses"]/text()',
+                '//*[contains(local-name(), "TotalExpenses") or contains(local-name(), "TotalDeductions")]/text()',
             ],
             'Common': [
                 '//*[contains(local-name(), "TotalExpenses")]/text()',
@@ -112,27 +122,40 @@ desired_fields = {
         'type': 'double',
         'paths': {
             '990': [
-                'irs:ReturnData/irs:IRS990/irs:BalanceSheetGrp/irs:TotalAssetsEOYAmt/text()',
-                'irs:ReturnData/irs:IRS990/irs:BalanceSheet/irs:TotalAssetsEOYAmt/text()',
-                'irs:ReturnData/irs:IRS990/irs:Form990TotalAssetsGrp/irs:TotalAssetsAmt/text()',  # Added
+                '//*[local-name()="TotalAssetsEOYAmt"]/text()',
+                '//*[local-name()="TotalAssetsEndOfYear"]/text()',
+                '//*[local-name()="AssetsEOYAmt"]/text()',
+                '//*[local-name()="AssetsEOY"]/text()',
+                '//*[local-name()="TotalAssets"]/text()',
+                '//*[contains(local-name(), "TotalAssets") and contains(local-name(), "EOY")]/text()',
+                '//*[contains(local-name(), "TotalAssets")]/text()',
             ],
             '990EZ': [
-                'irs:ReturnData/irs:IRS990EZ/irs:TotalAssetsEOYAmt/text()',
-                'irs:ReturnData/irs:IRS990EZ/irs:Form990TotalAssetsGrp/irs:TotalAssetsAmt/text()',  # Added
+                '//*[local-name()="Form990TotalAssetsGrp"]/*[local-name()="EOYAmt"]/text()',
+                '//*[local-name()="TotalAssetsEOYAmt"]/text()',
+                '//*[local-name()="AssetsEOYAmt"]/text()',
+                '//*[local-name()="TotalAssets"]/text()',
+                '//*[contains(local-name(), "TotalAssets") and contains(local-name(), "EOY")]/text()',
             ],
             '990PF': [
-                'irs:ReturnData/irs:IRS990PF/irs:FMVAssetsEOYAmt/text()',
-                'irs:ReturnData/irs:IRS990PF/irs:BalanceSheets/irs:TotalAssetsEOYAmt/text()',
-                'irs:ReturnData/irs:IRS990PF/irs:Form990TotalAssetsGrp/irs:TotalAssetsAmt/text()',  # Added
+                '//*[local-name()="TotalAssetsEOYAmt"]/text()',
+                '//*[local-name()="FMVAssetsEOYAmt"]/text()',
+                '//*[local-name()="TotalAssets"]/text()',
+                '//*[contains(local-name(), "TotalAssets") and contains(local-name(), "EOY")]/text()',
+                '//*[contains(local-name(), "FMVAssets") and contains(local-name(), "EOY")]/text()',
             ],
             '990T': [
-                'irs:ReturnData/irs:IRS990T/irs:BalanceSheet/irs:TotalAssetsEOYAmt/text()',
-                'irs:ReturnData/irs:IRS990T/irs:Form990TotalAssetsGrp/irs:TotalAssetsAmt/text()',  # Added
+                '//*[local-name()="BookValueAssetsEOYAmt"]/text()',
+                '//*[local-name()="TotalAssetsEOYAmt"]/text()',
+                '//*[local-name()="TotalAssets"]/text()',
+                '//*[contains(local-name(), "TotalAssets") and contains(local-name(), "EOY")]/text()',
             ],
             'Common': [
                 '//*[contains(local-name(), "TotalAssets") and contains(local-name(), "EOY")]/text()',
                 '//*[contains(local-name(), "AssetsEOY")]/text()',
-                '//*[contains(local-name(), "Form990TotalAssetsGrp")]//*[contains(local-name(), "TotalAssets")]/text()',  # Added
+                '//*[contains(local-name(), "TotalAssets")]/text()',
+                '//*[contains(local-name(), "FMVAssets") and contains(local-name(), "EOY")]/text()',
+                '//*[contains(local-name(), "BookValueAssets") and contains(local-name(), "EOY")]/text()',
             ]
         }
     },
@@ -140,21 +163,32 @@ desired_fields = {
         'type': 'string',
         'paths': {
             '990': [
-                'irs:ReturnData/irs:IRS990/irs:MissionDesc/text()',
-                'irs:ReturnData/irs:IRS990/irs:MissionStatementTxt/text()',
-                'irs:ReturnData/irs:IRS990/irs:ActivityOrMissionDesc/text()',
-                'irs:ReturnData/irs:IRS990/irs:PrimaryExemptPurposeTxt/text()',
+                '//*[local-name()="MissionDesc"]/text()',
+                '//*[local-name()="MissionStatement"]/text()',
+                '//*[local-name()="MissionStatementTxt"]/text()',
+                '//*[local-name()="ActivityOrMissionDesc"]/text()',
+                '//*[local-name()="PrimaryExemptPurposeTxt"]/text()',
+                '//*[contains(local-name(), "Mission") and contains(local-name(), "Desc")]/text()',
+                '//*[contains(local-name(), "ExemptPurpose")]/text()',
+                '//*[contains(local-name(), "MissionStatement")]/text()'
             ],
             '990EZ': [
-                'irs:ReturnData/irs:IRS990EZ/irs:PrimaryExemptPurposeTxt/text()',
-                'irs:ReturnData/irs:IRS990EZ/irs:MissionDescription/text()',
+                '//*[local-name()="MissionDesc"]/text()',
+                '//*[local-name()="MissionStatement"]/text()',
+                '//*[local-name()="PrimaryExemptPurposeTxt"]/text()',
+                '//*[contains(local-name(), "Mission") and contains(local-name(), "Desc")]/text()',
             ],
             '990PF': [
-                'irs:ReturnData/irs:IRS990PF/irs:PrimaryExemptPurposeTxt/text()',
-                'irs:ReturnData/irs:IRS990PF/irs:MissionDescription/text()',
+                '//*[local-name()="MissionDesc"]/text()',
+                '//*[local-name()="MissionStatement"]/text()',
+                '//*[local-name()="ActivityOrMissionDesc"]/text()',
+                '//*[local-name()="PrimaryExemptPurposeTxt"]/text()',
+                '//*[contains(local-name(), "ExemptPurpose")]/text()',
             ],
             '990T': [
-                'irs:ReturnData/irs:IRS990T/irs:MissionDescription/text()',
+                '//*[local-name()="MissionDesc"]/text()',
+                '//*[local-name()="MissionStatement"]/text()',
+                '//*[local-name()="ActivityOrMissionDesc"]/text()',
             ],
             'Common': [
                 '//*[contains(local-name(), "Mission") and (contains(local-name(), "Desc") or contains(local-name(), "Statement") or contains(local-name(), "Txt"))]/text()',
@@ -168,76 +202,77 @@ desired_fields = {
         'type': 'double',
         'paths': {
             '990': [
-                'irs:ReturnData/irs:IRS990/irs:BalanceSheetGrp/irs:NetAssetsOrFundBalancesEOYAmt/text()',
-                'irs:ReturnData/irs:IRS990/irs:BalanceSheet/irs:NetAssetsOrFundBalancesEOYAmt/text()',
+                '//*[local-name()="TotalNetAssetsFundBalanceEOYAmt"]/text()',
+                '//*[local-name()="TotNetAssetsFundBalanceEOYAmt"]/text()',
+                '//*[local-name()="NetAssetsFundBalancesEOYAmt"]/text()',
+                '//*[local-name()="NetAssetsOrFundBalancesEOYAmt"]/text()',
+                '//*[local-name()="NetAssetsEOYAmt"]/text()',
+                '//*[contains(local-name(), "TotalNetAssets") and contains(local-name(), "EOY")]/text()',
+                '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
             ],
             '990EZ': [
-                'irs:ReturnData/irs:IRS990EZ/irs:NetAssetsOrFundBalancesEOYAmt/text()',
+                '//*[local-name()="TotalNetAssetsEOYAmt"]/text()',
+                '//*[local-name()="NetAssetsOrFundBalancesEOYAmt"]/text()',
+                '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
             ],
             '990PF': [
-                'irs:ReturnData/irs:IRS990PF/irs:NetAssetsOrFundBalancesEOYAmt/text()',
+                '//*[local-name()="TotNetAstOrFundBalancesEOYAmt"]/text()',
+                '//*[local-name()="TotalNetAssetsEOYAmt"]/text()',
+                '//*[local-name()="NetAssetsOrFundBalancesEOYAmt"]/text()',
+                '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
             ],
             '990T': [
-                'irs:ReturnData/irs:IRS990T/irs:BalanceSheet/irs:NetAssetsOrFundBalancesEOYAmt/text()',
+                '//*[local-name()="BookValueAssetsEOYAmt"]/text()',
             ],
             'Common': [
+                '//*[contains(local-name(), "TotalNetAssets") and contains(local-name(), "EOY")]/text()',
                 '//*[contains(local-name(), "NetAssets") and contains(local-name(), "EOY")]/text()',
+                '//*[contains(local-name(), "TotNetAstOrFundBalancesEOYAmt")]/text()',
                 '//*[contains(local-name(), "NetAssetsOrFundBalancesEOYAmt")]/text()',
             ]
         }
     },
     'BusinessActivityCode': {
-    'type': 'string',
-    'paths': {
-        '990': [
-            # Existing paths
-            'irs:ReturnData/irs:IRS990/irs:PrincipalBusinessActivityCd/text()',
-            'irs:ReturnData/irs:IRS990/irs:BusinessActivityCode/text()',
-            'irs:ReturnData/irs:IRS990/irs:ProgramServiceAccomplishmentGrp/irs:ActivityCd/text()',
-            # Additional paths
-            'irs:ReturnData/irs:IRS990/irs:MissionDesc/text()',
-            'irs:ReturnData/irs:IRS990/irs:ActivityOrMissionDesc/text()',
-            'irs:ReturnData/irs:IRS990/irs:MissionStatementTxt/text()',
-            'irs:ReturnData/irs:IRS990/irs:PrimaryExemptPurposeTxt/text()',
-        ],
-        '990EZ': [
-            # Existing paths
-            'irs:ReturnData/irs:IRS990EZ/irs:PrincipalBusinessActivityCd/text()',
-            'irs:ReturnData/irs:IRS990EZ/irs:BusinessActivityCode/text()',
-            'irs:ReturnData/irs:IRS990EZ/irs:ActivityCd/text()',
-            # Additional paths
-            'irs:ReturnData/irs:IRS990EZ/irs:MissionDescription/text()',
-            'irs:ReturnData/irs:IRS990EZ/irs:PrimaryExemptPurposeTxt/text()',
-        ],
-        '990PF': [
-            # Existing paths
-            'irs:ReturnData/irs:IRS990PF/irs:PrincipalBusinessActivityCd/text()',
-            'irs:ReturnData/irs:IRS990PF/irs:BusinessActivityCode/text()',
-            'irs:ReturnData/irs:IRS990PF/irs:ActivityCd/text()',
-            # Additional paths
-            'irs:ReturnData/irs:IRS990PF/irs:PrimaryExemptPurposeTxt/text()',
-        ],
-        '990T': [
-            # Existing paths
-            'irs:ReturnData/irs:IRS990T/irs:PrincipalBusinessActivityCd/text()',
-            'irs:ReturnData/irs:IRS990T/irs:BusinessActivityCode/text()',
-            # Additional paths
-            'irs:ReturnData/irs:IRS990T/irs:MissionDescription/text()',
-        ],
-        'Common': [
-            # Existing paths
-            'irs:ReturnHeader/irs:PrincipalBusinessActivityCd/text()',
-            'irs:ReturnHeader/irs:BusinessActivityCode/text()',
-            '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
-            '//*[contains(local-name(), "BusinessActivityCode")]/text()',
-            '//*[contains(local-name(), "ActivityCd")]/text()',
-            # Additional paths
-            '//*[contains(local-name(), "MissionDesc")]/text()',
-            '//*[contains(local-name(), "ActivityOrMissionDesc")]/text()',
-            '//*[contains(local-name(), "MissionStatement")]/text()',
-            '//*[contains(local-name(), "PrimaryExemptPurposeTxt")]/text()',
-        ]
-    }
-},
-
+        'type': 'string',
+        'paths': {
+            '990': [
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="ProgramServiceAccomplishmentGrp"]/*[local-name()="ActivityCd"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="MissionDesc"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="ActivityOrMissionDesc"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="MissionStatementTxt"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="PrimaryExemptPurposeTxt"]/text()',
+            ],
+            '990EZ': [
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="ActivityCd"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="MissionDescription"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="PrimaryExemptPurposeTxt"]/text()',
+            ],
+            '990PF': [
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990PF"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990PF"]/*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990PF"]/*[local-name()="ActivityCd"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990PF"]/*[local-name()="PrimaryExemptPurposeTxt"]/text()',
+            ],
+            '990T': [
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990T"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990T"]/*[local-name()="BusinessActivityCode"]/text()',
+                '//*[local-name()="ReturnData"]/*[local-name()="IRS990T"]/*[local-name()="MissionDescription"]/text()',
+            ],
+            'Common': [
+                '//*[local-name()="ReturnHeader"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
+                '//*[local-name()="ReturnHeader"]/*[local-name()="BusinessActivityCode"]/text()',
+                '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
+                '//*[contains(local-name(), "BusinessActivityCode")]/text()',
+                '//*[contains(local-name(), "ActivityCd")]/text()',
+                '//*[contains(local-name(), "MissionDesc")]/text()',
+                '//*[contains(local-name(), "ActivityOrMissionDesc")]/text()',
+                '//*[contains(local-name(), "MissionStatement")]/text()',
+                '//*[contains(local-name(), "PrimaryExemptPurposeTxt")]/text()',
+            ]
+        }
+    },
 }

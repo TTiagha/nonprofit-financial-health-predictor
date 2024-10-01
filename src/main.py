@@ -16,7 +16,7 @@ from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
 from data_analyzer import analyze_field_coverage, analyze_path_usage
 from s3_utils import upload_file_to_s3, download_file_from_s3, get_s3_client
-from config import S3_BUCKET, S3_FOLDER
+from config import S3_BUCKET, S3_FOLDER, desired_fields
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -108,9 +108,7 @@ AVAILABLE_URLS = {
         "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_7.zip",
     ]
     # Add other years as needed...
-
 }
-
 
 def upload_xml_content_to_s3(xml_content, s3_key):
     try:
@@ -140,7 +138,6 @@ def run_new990_check():
         logger.error(f"An error occurred while running new990.py: {str(e)}")
     
     logger.info("Continuing with the rest of the script...")
-
 
 def save_to_s3_parquet(records):
     if not records:
@@ -240,7 +237,7 @@ def main():
         total_files_processed = 0
         start_time = time.time()
         
-        files_without_total_assets = {}  # Initialized as a dictionary
+        files_without_total_assets = {}
         
         for url in urls:
             logger.info(f"Processing URL: {url}")
@@ -268,69 +265,37 @@ def main():
         form_types = [r['FormType'] for r in all_records]
         logger.info(f"Form type distribution: {dict(Counter(form_types))}")
 
-        total_net_assets = [r.get('TotalNetAssets') for r in all_records if 'TotalNetAssets' in r]
-        logger.info(f"TotalNetAssets: found in {len(total_net_assets)}/{len(all_records)} records")
-        valid_net_assets = [x for x in total_net_assets if x is not None and isinstance(x, (int, float))]
-        if valid_net_assets:
-            logger.info(f"TotalNetAssets: min={min(valid_net_assets)}, max={max(valid_net_assets)}, avg={sum(valid_net_assets)/len(valid_net_assets)}")
-        else:
-            logger.warning("No valid TotalNetAssets values found")
-
-        mission_statements = [r.get('MissionStatement') for r in all_records if 'MissionStatement' in r]
-        logger.info(f"MissionStatement: found in {len(mission_statements)}/{len(all_records)} records")
-        if mission_statements:
-            valid_statements = [ms for ms in mission_statements if ms]
-            if valid_statements:
-                avg_length = sum(len(ms) for ms in valid_statements) / len(valid_statements)
-                logger.info(f"Average MissionStatement length: {avg_length:.2f} characters")
-            else:
-                logger.warning("No valid MissionStatement values found")
-
-        total_assets = [r.get('TotalAssets') for r in all_records if 'TotalAssets' in r]
-        logger.info(f"TotalAssets: found in {len(total_assets)}/{len(all_records)} records")
-        valid_assets = [x for x in total_assets if x is not None and isinstance(x, (int, float))]
-        if valid_assets:
-            logger.info(f"TotalAssets: min={min(valid_assets)}, max={max(valid_assets)}, avg={sum(valid_assets)/len(valid_assets)}")
-        else:
-            logger.warning("No valid TotalAssets values found")
-        
-        total_revenue = [r.get('TotalRevenue') for r in all_records if 'TotalRevenue' in r]
-        logger.info(f"TotalRevenue: found in {len(total_revenue)}/{len(all_records)} records")
-        valid_revenue = [x for x in total_revenue if x is not None and isinstance(x, (int, float))]
-        if valid_revenue:
-            logger.info(f"TotalRevenue: min={min(valid_revenue)}, max={max(valid_revenue)}, avg={sum(valid_revenue)/len(valid_revenue)}")
-        else:
-            logger.warning("No valid TotalRevenue values found")
-
-        total_expenses = [r.get('TotalExpenses') for r in all_records if 'TotalExpenses' in r]
-        logger.info(f"TotalExpenses: found in {len(total_expenses)}/{len(all_records)} records")
-        valid_expenses = [x for x in total_expenses if x is not None and isinstance(x, (int, float))]
-        if valid_expenses:
-            logger.info(f"TotalExpenses: min={min(valid_expenses)}, max={max(valid_expenses)}, avg={sum(valid_expenses)/len(valid_expenses)}")
-        else:
-            logger.warning("No valid TotalExpenses values found")
-
-        business_activity_codes = [r.get('BusinessActivityCode') for r in all_records if 'BusinessActivityCode' in r]
-        logger.info(f"BusinessActivityCode: found in {len(business_activity_codes)}/{len(all_records)} records")
-        extraction_rate = (len(business_activity_codes) / len(all_records)) * 100 if len(all_records) > 0 else 0
-        logger.info(f"BusinessActivityCode extraction rate: {extraction_rate:.2f}%")
-        if business_activity_codes:
-            valid_codes = [code for code in business_activity_codes if code]
-            if valid_codes:
-                code_counter = Counter(valid_codes)
-                top_5_codes = code_counter.most_common(5)
-                logger.info(f"Top 5 BusinessActivityCodes: {top_5_codes}")
-                logger.info(f"Number of unique BusinessActivityCodes: {len(set(valid_codes))}")
-            else:
-                logger.warning("No valid BusinessActivityCode values found")
-        else:
-            logger.warning("No BusinessActivityCode values found")
-
-        logger.info(f"Files without TotalRevenue: {len(all_records) - len(total_revenue)}")
-        logger.info(f"Files without TotalExpenses: {len(all_records) - len(total_expenses)}")
-        logger.info(f"Files without TotalAssets: {len(all_records) - len(total_assets)}")
-        logger.info(f"Files without TotalNetAssets: {len(all_records) - len(total_net_assets)}")
-        logger.info(f"Files without BusinessActivityCode: {len(all_records) - len(business_activity_codes)}")
+        # Log extraction statistics for all fields
+        logger.info("Field extraction statistics:")
+        for field in desired_fields.keys():
+            field_values = [r.get(field) for r in all_records if field in r]
+            extraction_rate = (len(field_values) / len(all_records)) * 100 if len(all_records) > 0 else 0
+            logger.info(f"{field}: found in {len(field_values)}/{len(all_records)} records ({extraction_rate:.2f}%)")
+            
+            if field in ['TotalNetAssets', 'TotalAssets', 'TotalRevenue', 'TotalExpenses']:
+                valid_values = [x for x in field_values if x is not None and isinstance(x, (int, float))]
+                if valid_values:
+                    logger.info(f"{field}: min={min(valid_values)}, max={max(valid_values)}, avg={sum(valid_values)/len(valid_values)}")
+                else:
+                    logger.warning(f"No valid {field} values found")
+            
+            elif field == 'MissionStatement':
+                valid_statements = [ms for ms in field_values if ms]
+                if valid_statements:
+                    avg_length = sum(len(ms) for ms in valid_statements) / len(valid_statements)
+                    logger.info(f"Average MissionStatement length: {avg_length:.2f} characters")
+                else:
+                    logger.warning("No valid MissionStatement values found")
+            
+            elif field == 'BusinessActivityCode':
+                valid_codes = [code for code in field_values if code]
+                if valid_codes:
+                    code_counter = Counter(valid_codes)
+                    top_5_codes = code_counter.most_common(5)
+                    logger.info(f"Top 5 BusinessActivityCodes: {top_5_codes}")
+                    logger.info(f"Number of unique BusinessActivityCodes: {len(set(valid_codes))}")
+                else:
+                    logger.warning("No valid BusinessActivityCode values found")
 
         avg_fields = sum(len(r) for r in all_records) / len(all_records) if all_records else 0
         logger.info(f"Average fields per record: {avg_fields:.2f}")

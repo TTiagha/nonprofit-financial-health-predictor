@@ -4,7 +4,7 @@ import time
 from lxml import etree
 from logger import logger
 from config import (
-    S3_BUCKET, S3_NOREV_FOLDER, S3_NOEXP_FOLDER, S3_NOASS_FOLDER, S3_NONASS_FOLDER, s3_client
+    S3_BUCKET, S3_NOREV_FOLDER, S3_NOEXP_FOLDER, S3_NOASS_FOLDER, S3_NONASS_FOLDER, s3_client, desired_fields
 )
 from xml_parser import parse_return
 from utils import is_state_nonprofit
@@ -22,6 +22,7 @@ def process_xml_files(xml_files, state_filter):
 
     total_returns_processed = 0
     total_returns_with_bac = 0
+    field_extraction_stats = {field: 0 for field in desired_fields.keys()}
 
     for filename, xml_content in xml_files.items():
         file_start_time = time.time()
@@ -48,12 +49,15 @@ def process_xml_files(xml_files, state_filter):
                 total_returns_processed += 1
                 returns_processed_in_file += 1
                 try:
-                    # Pass the ns dictionary to parse_return
                     data = parse_return(Return, ns, filename)
                     if data and is_state_nonprofit(data, state_filter):
                         records.append(data)
                         state_files.add(filename)
                         logger.info(f"{state_filter} nonprofit found in {filename}, Return {i+1}")
+
+                        for field in desired_fields.keys():
+                            if field in data and data[field] is not None:
+                                field_extraction_stats[field] += 1
 
                         if 'TotalRevenue' not in data or data['TotalRevenue'] is None:
                             file_missing_revenue = True
@@ -64,7 +68,6 @@ def process_xml_files(xml_files, state_filter):
                         if 'TotalNetAssets' not in data or data['TotalNetAssets'] is None:
                             file_missing_net_assets = True
                         
-                        # Use the extracted data to check for BusinessActivityCode
                         if 'BusinessActivityCode' in data and data['BusinessActivityCode']:
                             total_returns_with_bac += 1
                             returns_with_bac_in_file += 1
@@ -104,6 +107,10 @@ def process_xml_files(xml_files, state_filter):
     logger.info(f'Files without TotalAssets: {len(no_ass_files)}')
     logger.info(f'Files without TotalNetAssets: {len(no_nass_files)}')
     logger.info(f'Files without TotalAssets: {len(no_total_assets_files)}')
+
+    logger.info("Field extraction statistics:")
+    for field, count in field_extraction_stats.items():
+        logger.info(f"{field}: {count}/{total_returns_processed} ({count/total_returns_processed*100:.2f}%)")
 
     if records:
         logger.info(f"Average fields per record: {sum(len(r) for r in records) / len(records):.2f}")
