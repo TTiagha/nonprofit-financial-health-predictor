@@ -141,6 +141,7 @@ def run_new990_check():
     
     logger.info("Continuing with the rest of the script...")
 
+
 def save_to_s3_parquet(records):
     if not records:
         logger.warning('No valid records to save.')
@@ -162,6 +163,9 @@ def save_to_s3_parquet(records):
         logger.info('Existing Parquet file found. Downloading and merging data.')
         existing_data = download_file_from_s3(s3_key)
         existing_df = pd.read_parquet(BytesIO(existing_data))
+        existing_df['EIN'] = existing_df['EIN'].astype(str)
+
+        new_df['EIN'] = new_df['EIN'].astype(str)
 
         merged_df = pd.concat([existing_df, new_df], ignore_index=True)
         
@@ -172,6 +176,8 @@ def save_to_s3_parquet(records):
     else:
         logger.info('No existing Parquet file found. Creating new file.')
         merged_df = new_df
+
+    merged_df['EIN'] = merged_df['EIN'].astype(str)
 
     merged_table = pa.Table.from_pandas(merged_df)
 
@@ -207,33 +213,20 @@ def get_user_input():
                 selected_urls.extend(AVAILABLE_URLS[year])
                 print("Selected all URLs for", year)
             else:
-                indices = [int(i.strip()) - 1 for i in selections.split(',')]
-                for i in indices:
-                    if 0 <= i < len(AVAILABLE_URLS[year]):
-                        selected_urls.append(AVAILABLE_URLS[year][i])
-                        print(f"[X] {i+1}. {AVAILABLE_URLS[year][i]}")
-                    else:
-                        print(f"Invalid selection: {i+1}")
+                try:
+                    indices = [int(i.strip()) - 1 for i in selections.split(',')]
+                    for i in indices:
+                        if 0 <= i < len(AVAILABLE_URLS[year]):
+                            selected_urls.append(AVAILABLE_URLS[year][i])
+                            print(f"[X] {i+1}. {AVAILABLE_URLS[year][i]}")
+                        else:
+                            print(f"Invalid selection: {i+1}")
+                except ValueError:
+                    print("Invalid input. Please enter numbers separated by commas or 'all'.")
         else:
             print(f"Invalid year: {year}")
     
     return state, selected_urls
-
-def upload_file_to_s3_noBAC(file_path, s3_key):
-    try:
-        if not os.path.exists(file_path):
-            logger.error(f"File not found: {file_path}")
-            return
-
-        file_size = os.path.getsize(file_path)
-        logger.info(f"Attempting to upload file: {file_path} (Size: {file_size} bytes)")
-
-        with open(file_path, 'rb') as file:
-            file_content = file.read()
-            upload_file_to_s3(file_content, s3_key)
-        logger.info(f"Successfully uploaded {file_path} to S3: {s3_key}")
-    except Exception as e:
-        logger.error(f"Error uploading {file_path} to S3: {str(e)}")
 
 def main():
     logger.info(f"Starting Nonprofit Financial Health Predictor at {datetime.now()}")
@@ -247,37 +240,34 @@ def main():
         total_files_processed = 0
         start_time = time.time()
         
-        files_without_BAC = {}  # Initialized as a dictionary
+        files_without_total_assets = {}  # Initialized as a dictionary
         
         for url in urls:
             logger.info(f"Processing URL: {url}")
             xml_files = download_and_extract_xml_files(url)
-            records, no_BAC_files = process_xml_files(xml_files, state_filter)
+            records, no_total_assets_files = process_xml_files(xml_files, state_filter)
             all_records.extend(records)
-            files_without_BAC.update(no_BAC_files)  # Use update() instead of extend()
+            files_without_total_assets.update(no_total_assets_files)
             total_files_processed += len(xml_files)
             
             logger.info(f"Files processed from this URL: {len(xml_files)}")
 
-        # Rest of your code...
-
-    
         end_time = time.time()
         processing_time = end_time - start_time
         logger.info(f"Processed {len(all_records)} {state_filter} nonprofit records from {total_files_processed} files in {processing_time:.2f} seconds")
     
-        logger.info(f"Uploading files without BusinessActivityCode to S3 (max 20 files)")
-        logger.info(f"Total files without BAC: {len(files_without_BAC)}")
-        for i, (file_name, xml_content) in enumerate(files_without_BAC.items()):
-            s3_key = f"{S3_FOLDER}/NoBac/{file_name}"
+        logger.info(f"Uploading files without TotalAssets to S3 (max 20 files)")
+        logger.info(f"Total files without TotalAssets: {len(files_without_total_assets)}")
+        for i, (file_name, xml_content) in enumerate(files_without_total_assets.items()):
+            s3_key = f"{S3_FOLDER}/NoTotalAssets/{file_name}"
             logger.info(f"Attempting to upload file {i+1}: {file_name}")
             upload_xml_content_to_s3(xml_content, s3_key)
             if i == 19:
                 break
-    
+
         form_types = [r['FormType'] for r in all_records]
         logger.info(f"Form type distribution: {dict(Counter(form_types))}")
-    
+
         total_net_assets = [r.get('TotalNetAssets') for r in all_records if 'TotalNetAssets' in r]
         logger.info(f"TotalNetAssets: found in {len(total_net_assets)}/{len(all_records)} records")
         valid_net_assets = [x for x in total_net_assets if x is not None and isinstance(x, (int, float))]
@@ -285,7 +275,7 @@ def main():
             logger.info(f"TotalNetAssets: min={min(valid_net_assets)}, max={max(valid_net_assets)}, avg={sum(valid_net_assets)/len(valid_net_assets)}")
         else:
             logger.warning("No valid TotalNetAssets values found")
-    
+
         mission_statements = [r.get('MissionStatement') for r in all_records if 'MissionStatement' in r]
         logger.info(f"MissionStatement: found in {len(mission_statements)}/{len(all_records)} records")
         if mission_statements:
@@ -295,7 +285,7 @@ def main():
                 logger.info(f"Average MissionStatement length: {avg_length:.2f} characters")
             else:
                 logger.warning("No valid MissionStatement values found")
-    
+
         total_assets = [r.get('TotalAssets') for r in all_records if 'TotalAssets' in r]
         logger.info(f"TotalAssets: found in {len(total_assets)}/{len(all_records)} records")
         valid_assets = [x for x in total_assets if x is not None and isinstance(x, (int, float))]
@@ -311,7 +301,7 @@ def main():
             logger.info(f"TotalRevenue: min={min(valid_revenue)}, max={max(valid_revenue)}, avg={sum(valid_revenue)/len(valid_revenue)}")
         else:
             logger.warning("No valid TotalRevenue values found")
-    
+
         total_expenses = [r.get('TotalExpenses') for r in all_records if 'TotalExpenses' in r]
         logger.info(f"TotalExpenses: found in {len(total_expenses)}/{len(all_records)} records")
         valid_expenses = [x for x in total_expenses if x is not None and isinstance(x, (int, float))]
@@ -319,10 +309,10 @@ def main():
             logger.info(f"TotalExpenses: min={min(valid_expenses)}, max={max(valid_expenses)}, avg={sum(valid_expenses)/len(valid_expenses)}")
         else:
             logger.warning("No valid TotalExpenses values found")
-    
+
         business_activity_codes = [r.get('BusinessActivityCode') for r in all_records if 'BusinessActivityCode' in r]
         logger.info(f"BusinessActivityCode: found in {len(business_activity_codes)}/{len(all_records)} records")
-        extraction_rate = (len(business_activity_codes) / len(all_records)) * 100
+        extraction_rate = (len(business_activity_codes) / len(all_records)) * 100 if len(all_records) > 0 else 0
         logger.info(f"BusinessActivityCode extraction rate: {extraction_rate:.2f}%")
         if business_activity_codes:
             valid_codes = [code for code in business_activity_codes if code]
@@ -335,14 +325,14 @@ def main():
                 logger.warning("No valid BusinessActivityCode values found")
         else:
             logger.warning("No BusinessActivityCode values found")
-    
+
         logger.info(f"Files without TotalRevenue: {len(all_records) - len(total_revenue)}")
         logger.info(f"Files without TotalExpenses: {len(all_records) - len(total_expenses)}")
         logger.info(f"Files without TotalAssets: {len(all_records) - len(total_assets)}")
         logger.info(f"Files without TotalNetAssets: {len(all_records) - len(total_net_assets)}")
         logger.info(f"Files without BusinessActivityCode: {len(all_records) - len(business_activity_codes)}")
-    
-        avg_fields = sum(len(r) for r in all_records) / len(all_records)
+
+        avg_fields = sum(len(r) for r in all_records) / len(all_records) if all_records else 0
         logger.info(f"Average fields per record: {avg_fields:.2f}")
             
         analyze_field_coverage(all_records)

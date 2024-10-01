@@ -17,7 +17,7 @@ def process_xml_files(xml_files, state_filter):
     no_exp_files = set()
     no_ass_files = set()
     no_nass_files = set()
-    no_bac_files = {}
+    no_total_assets_files = {}
     start_time = time.time()
 
     total_returns_processed = 0
@@ -39,7 +39,7 @@ def process_xml_files(xml_files, state_filter):
             file_missing_expenses = False
             file_missing_assets = False
             file_missing_net_assets = False
-            file_missing_bac = False
+            file_missing_total_assets = False
             returns_processed_in_file = 0
             returns_with_bac_in_file = 0
 
@@ -70,12 +70,7 @@ def process_xml_files(xml_files, state_filter):
                             logger.info(f"BusinessActivityCode found in {filename}, Return {i+1}: {data.get('BusinessActivityCode')}")
                         else:
                             logger.warning(f"BusinessActivityCode not found in {filename}, Return {i+1}")
-                            file_missing_bac = True
-                            # Log a sample of the XML content
-                            xml_sample = etree.tostring(Return, pretty_print=True, encoding='unicode')[:500]
-                            logger.debug(f"XML sample for Return {i+1} without BusinessActivityCode:\n{xml_sample}")
-                    else:
-                        logger.info(f"Return {i+1} in {filename} does not meet criteria (invalid data or wrong state)")
+                    
                 except Exception as e:
                     logger.error(f'Error processing Return {i+1} in {filename}: {e}')
 
@@ -90,8 +85,8 @@ def process_xml_files(xml_files, state_filter):
                 no_ass_files.add(filename)
             if file_missing_net_assets:
                 no_nass_files.add(filename)
-            if file_missing_bac:
-                no_bac_files[filename] = xml_content
+            if file_missing_assets:
+                no_total_assets_files[filename] = xml_content
 
         except Exception as e:
             logger.error(f'Error processing {filename}: {e}')
@@ -107,11 +102,11 @@ def process_xml_files(xml_files, state_filter):
     logger.info(f'Files without TotalExpenses: {len(no_exp_files)}')
     logger.info(f'Files without TotalAssets: {len(no_ass_files)}')
     logger.info(f'Files without TotalNetAssets: {len(no_nass_files)}')
-    logger.info(f'Files without BusinessActivityCode: {len(no_bac_files)}')
+    logger.info(f'Files without TotalAssets: {len(no_total_assets_files)}')
 
     if records:
         logger.info(f"Average fields per record: {sum(len(r) for r in records) / len(records):.2f}")
     else:
         logger.warning("No valid nonprofit records processed.")
 
-    return records, no_bac_files
+    return records, no_total_assets_files
