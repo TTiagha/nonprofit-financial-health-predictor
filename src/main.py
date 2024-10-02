@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 import boto3
 from io import BytesIO
 import pandas as pd
-from openai import OpenAI
+import openai
 
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
@@ -125,20 +125,19 @@ def get_ntee_code_description(organization_name, mission_statement):
     prompt += "\nProvide a brief NTEE code description (e.g., 'Housing Development, Construction & Management', 'Emergency Assistance', 'Food Banks & Pantries') based on the information given."
 
     try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are an expert in nonprofit organizations and NTEE codes."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},
+        response = openai.Completion.create(
+            engine=model,
+            prompt=prompt,
+            max_tokens=50,
+            n=1,
+            stop=None,
             temperature=0.0
         )
-        description = response.choices[0].message.content
+        description = response.choices[0].text.strip()
         return description
     except Exception as e:
         logger.error(f"Error inferring NTEE code: {str(e)}")
-        return '{"ntee_code_description": "Unknown"}'
+        return "Unknown"
 
 def upload_xml_content_to_s3(xml_content, s3_key):
     try:

@@ -14,7 +14,6 @@ This project aims to develop a predictive model for assessing the financial heal
 - Logging: Detailed logging in CloudWatch for error tracking and run summaries
 - Automated IRS Form 990 XML File Tracking: Monitors and reports new file releases
 - NTEE Code Interpretation: Uses AI to infer NTEE (National Taxonomy of Exempt Entities) codes from organization names and mission statements
-- Visualization: Generates insightful visualizations of the processed data, including NTEE code distribution
 
 ## Recent Updates
 
@@ -26,7 +25,6 @@ This project aims to develop a predictive model for assessing the financial heal
 - Implemented CloudWatch logging for specific, important log messages
 - Removed local file logging to health.log
 - Added new990.py script for automated tracking of new IRS Form 990 XML file releases
-- Implemented new visualization for NTEE Code Description distribution
 
 ## Data Processing Insights
 
@@ -45,7 +43,6 @@ This method allows our parser to find the correct elements regardless of namespa
 - Data Format: XML parsing, Parquet for storage
 - Web Scraping: BeautifulSoup4 for parsing IRS website
 - AI: OpenAI's GPT-4-mini for NTEE code interpretation
-- Data Visualization: Matplotlib, Seaborn
 
 ## Project Structure
 
@@ -65,9 +62,7 @@ nonprofit-financial-health-predictor/
 │   ├── utils.py          # Utility functions
 │   ├── xml_downloader.py # XML file downloading and extraction
 │   ├── xml_parser.py     # XML parsing functions
-│   ├── new990.py         # IRS Form 990 XML file tracking script
-│   └── visualization/    # Data visualization scripts
-│       └── DataVisualization.py # Generates visualizations
+│   └── new990.py         # IRS Form 990 XML file tracking script
 ├── tests/            # Test files
 │
 ├── .gitignore        # Specifies intentionally untracked files to ignore
@@ -132,23 +127,6 @@ This script will:
 - Check the IRS website for new Form 990 XML file releases.
 - Report any new files found since the last check.
 - Update the last checked year to avoid redundant processing.
-
-### Data Visualization
-
-To generate visualizations:
-
-```bash
-python src/visualization/DataVisualization.py
-```
-
-This script will create several visualizations:
-- Revenue Distribution
-- Top 10 Organizations by Total Assets
-- Average Financial Metrics by Form Type
-- Expense to Revenue Ratio Distribution
-- NTEE Code Description Distribution
-
-The visualizations will be saved as PNG files in the current directory.
 
 ## CloudWatch Logging
 
@@ -224,7 +202,6 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 - BusinessActivityCode field has been removed from data processing.
 - NTEE code interpretation using AI (OpenAI's GPT-4-mini) has been added.
 - XML parsing has been improved with namespace-agnostic XPath expressions.
-- New visualization for NTEE Code Description distribution has been added.
 
 ## Next Steps
 
@@ -234,7 +211,6 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 - Improve error handling and input validation.
 - Add more detailed documentation for each module.
 - Refine NTEE code interpretation accuracy.
-- Explore additional visualizations to provide deeper insights into nonprofit financial health.
 
 ## Contributing
 
