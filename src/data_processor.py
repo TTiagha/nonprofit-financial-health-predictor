@@ -10,6 +10,36 @@ from xml_parser import parse_return
 from utils import is_state_nonprofit
 from s3_utils import upload_file_to_s3
 
+def print_summary(start_time, xml_files, records, total_returns_processed, state_filter, field_extraction_stats, no_revenue_files, no_exp_files, no_ass_files, no_nass_files, no_total_assets_files):
+    end_time = time.time()
+    processing_time = end_time - start_time
+    
+    logger.info("\n" + "="*50)
+    logger.info("PROCESSING SUMMARY")
+    logger.info("="*50)
+    logger.info(f"Total XML files processed: {len(xml_files)}")
+    logger.info(f"Total Returns processed: {total_returns_processed}")
+    logger.info(f"Total {state_filter} nonprofit records extracted: {len(records)}")
+    logger.info(f"Total processing time: {processing_time:.2f} seconds")
+    
+    logger.info("\nField extraction statistics:")
+    for field, count in field_extraction_stats.items():
+        percentage = (count / total_returns_processed * 100) if total_returns_processed > 0 else 0
+        logger.info(f"{field}: {count}/{total_returns_processed} ({percentage:.2f}%)")
+    
+    logger.info(f"\nFiles without TotalRevenue: {len(no_revenue_files)}")
+    logger.info(f"Files without TotalExpenses: {len(no_exp_files)}")
+    logger.info(f"Files without TotalAssets: {len(no_ass_files)}")
+    logger.info(f"Files without TotalNetAssets: {len(no_nass_files)}")
+    logger.info(f"Files without TotalAssets: {len(no_total_assets_files)}")
+    
+    if records:
+        logger.info(f"\nAverage fields per record: {sum(len(r) for r in records) / len(records):.2f}")
+    else:
+        logger.warning("\nNo valid nonprofit records processed.")
+    
+    logger.info("="*50)
+
 def process_xml_files(xml_files, state_filter, get_ntee_code_description):
     records = []
     state_files = set()
@@ -24,39 +54,30 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
     field_extraction_stats = {field: 0 for field in desired_fields.keys()}
 
     for filename, xml_content in xml_files.items():
-        file_start_time = time.time()
-        logger.info(f'Processing {filename}')
         try:
             tree = etree.fromstring(xml_content)
             ns = {'irs': 'http://www.irs.gov/efile'}
 
             Returns = tree.xpath('//irs:Return', namespaces=ns)
             if not Returns:
-                logger.warning(f'No Return elements found in {filename}')
                 continue
 
             file_missing_revenue = False
             file_missing_expenses = False
             file_missing_assets = False
             file_missing_net_assets = False
-            file_missing_total_assets = False
-            returns_processed_in_file = 0
 
-            for i, Return in enumerate(Returns):
-                logger.info(f'Processing Return {i+1} in {filename}')
+            for Return in Returns:
                 total_returns_processed += 1
-                returns_processed_in_file += 1
                 try:
                     data = parse_return(Return, ns, filename)
                     if data and is_state_nonprofit(data, state_filter):
-                        # Infer NTEE code using AI
                         mission_description = f"Nonprofit Name: {data.get('OrganizationName', '')}\nMission: {data.get('MissionStatement', '')}"
                         ntee_code = get_ntee_code_description(mission_description)
                         data['NTEECode'] = ntee_code
 
                         records.append(data)
                         state_files.add(filename)
-                        logger.info(f"{state_filter} nonprofit found in {filename}, Return {i+1}")
 
                         for field in desired_fields.keys():
                             if field in data and data[field] is not None:
@@ -70,13 +91,9 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
                             file_missing_assets = True
                         if 'TotalNetAssets' not in data or data['TotalNetAssets'] is None:
                             file_missing_net_assets = True
-                        
-                        logger.info(f"Inferred NTEE Code for {filename}, Return {i+1}: {ntee_code}")
                     
                 except Exception as e:
-                    logger.error(f'Error processing Return {i+1} in {filename}: {e}')
-
-            logger.info(f"Processed {returns_processed_in_file} Returns in {filename}")
+                    logger.error(f'Error processing Return in {filename}: {e}')
 
             if file_missing_revenue:
                 no_revenue_files.add(filename)
@@ -92,25 +109,7 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
         except Exception as e:
             logger.error(f'Error processing {filename}: {e}')
 
-        file_end_time = time.time()
-        logger.info(f"Processed {filename} in {file_end_time - file_start_time:.2f} seconds")
-
-    end_time = time.time()
-    logger.info(f'Processed {len(records)} {state_filter} nonprofit records from {len(xml_files)} files in {end_time - start_time:.2f} seconds')
-    logger.info(f'Total Returns processed: {total_returns_processed}')
-    logger.info(f'Files without TotalRevenue: {len(no_revenue_files)}')
-    logger.info(f'Files without TotalExpenses: {len(no_exp_files)}')
-    logger.info(f'Files without TotalAssets: {len(no_ass_files)}')
-    logger.info(f'Files without TotalNetAssets: {len(no_nass_files)}')
-    logger.info(f'Files without TotalAssets: {len(no_total_assets_files)}')
-
-    logger.info("Field extraction statistics:")
-    for field, count in field_extraction_stats.items():
-        logger.info(f"{field}: {count}/{total_returns_processed} ({count/total_returns_processed*100:.2f}%)")
-
-    if records:
-        logger.info(f"Average fields per record: {sum(len(r) for r in records) / len(records):.2f}")
-    else:
-        logger.warning("No valid nonprofit records processed.")
+    print_summary(start_time, xml_files, records, total_returns_processed, state_filter, field_extraction_stats, 
+                  no_revenue_files, no_exp_files, no_ass_files, no_nass_files, no_total_assets_files)
 
     return records, no_total_assets_files

@@ -261,6 +261,8 @@ def main():
         run_new990_check()
 
         state_filter, urls = get_user_input()
+        logger.info(f"User selected state filter: {state_filter}")
+        logger.info(f"User selected {len(urls)} URLs to process")
         
         all_records = []
         total_files_processed = 0
@@ -271,17 +273,30 @@ def main():
         for url in urls:
             logger.info(f"Processing URL: {url}")
             xml_files = download_and_extract_xml_files(url)
+            logger.info(f"Downloaded and extracted {len(xml_files)} XML files from {url}")
+            
+            if not xml_files:
+                logger.warning(f"No XML files were extracted from {url}")
+                continue
+            
             records, no_total_assets_files = process_xml_files(xml_files, state_filter, get_ntee_code_description)
+            logger.info(f"Processed {len(records)} records from {url}")
+            logger.info(f"Found {len(no_total_assets_files)} files without TotalAssets from {url}")
+            
             all_records.extend(records)
             files_without_total_assets.update(no_total_assets_files)
             total_files_processed += len(xml_files)
             
             logger.info(f"Files processed from this URL: {len(xml_files)}")
+            logger.info(f"Total records processed so far: {len(all_records)}")
 
         end_time = time.time()
         processing_time = end_time - start_time
         logger.info(f"Processed {len(all_records)} {state_filter} nonprofit records from {total_files_processed} files in {processing_time:.2f} seconds")
     
+        if not all_records:
+            logger.warning("No records were processed. This could be due to no matching records for the selected state or issues with data extraction.")
+        
         logger.info(f"Uploading files without TotalAssets to S3 (max 20 files)")
         logger.info(f"Total files without TotalAssets: {len(files_without_total_assets)}")
         for i, (file_name, xml_content) in enumerate(files_without_total_assets.items()):
@@ -335,6 +350,7 @@ def main():
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
+        logger.exception("Exception details:")
 
 if __name__ == '__main__':
     main()
