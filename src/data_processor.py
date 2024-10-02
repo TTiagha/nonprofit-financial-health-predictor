@@ -10,7 +10,7 @@ from xml_parser import parse_return
 from utils import is_state_nonprofit
 from s3_utils import upload_file_to_s3
 
-def process_xml_files(xml_files, state_filter):
+def process_xml_files(xml_files, state_filter, get_ntee_code_description):
     records = []
     state_files = set()
     no_revenue_files = set()
@@ -51,6 +51,11 @@ def process_xml_files(xml_files, state_filter):
                 try:
                     data = parse_return(Return, ns, filename)
                     if data and is_state_nonprofit(data, state_filter):
+                        # Infer NTEE code using AI
+                        mission_description = f"Nonprofit Name: {data.get('OrganizationName', '')}\nMission: {data.get('MissionStatement', '')}"
+                        ntee_code = get_ntee_code_description(mission_description)
+                        data['NTEECode'] = ntee_code
+
                         records.append(data)
                         state_files.add(filename)
                         logger.info(f"{state_filter} nonprofit found in {filename}, Return {i+1}")
@@ -74,6 +79,8 @@ def process_xml_files(xml_files, state_filter):
                             logger.info(f"BusinessActivityCode found in {filename}, Return {i+1}: {data.get('BusinessActivityCode')}")
                         else:
                             logger.warning(f"BusinessActivityCode not found in {filename}, Return {i+1}")
+                        
+                        logger.info(f"Inferred NTEE Code for {filename}, Return {i+1}: {ntee_code}")
                     
                 except Exception as e:
                     logger.error(f'Error processing Return {i+1} in {filename}: {e}')

@@ -11,6 +11,7 @@ import pyarrow.parquet as pq
 import boto3
 from io import BytesIO
 import pandas as pd
+from mistralai import Mistral
 
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
@@ -21,6 +22,11 @@ from config import S3_BUCKET, S3_FOLDER, desired_fields
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Mistral AI setup
+api_key = 'RPsDrHBSNjhmPLUHmbKaZfySYEapVQEm'
+model = 'open-mixtral-8x22b'
+client = Mistral(api_key=api_key)
 
 # Available URLs for IRS Form 990 data
 AVAILABLE_URLS = {
@@ -107,8 +113,51 @@ AVAILABLE_URLS = {
         "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_6.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_7.zip",
     ]
-    # Add other years as needed...
 }
+
+def get_ntee_code_description(mission_description):
+    examples = [
+        {
+            "role": "user",
+            "content": "Nonprofit Name: Habitat for Humanity\nMission: Seeking to put God's love into action, Habitat for Humanity brings people together to build homes, communities and hope."
+        },
+        {
+            "role": "assistant",
+            "content": "Housing Development, Construction & Management"
+        },
+        {
+            "role": "user",
+            "content": "Nonprofit Name: American Red Cross\nMission: Prevents and alleviates human suffering in the face of emergencies by mobilizing the power of volunteers and the generosity of donors."
+        },
+        {
+            "role": "assistant",
+            "content": "Emergency Assistance"
+        },
+        {
+            "role": "user",
+            "content": "Nonprofit Name: Feeding America\nMission: To feed America's hungry through a nationwide network of member food banks and engage our country in the fight to end hunger."
+        },
+        {
+            "role": "assistant",
+            "content": "Food Banks & Pantries"
+        }
+    ]
+    
+    messages = examples.copy()
+    messages.append({
+        "role": "user",
+        "content": mission_description
+    })
+    
+    response = client.chat.complete(
+        model=model,
+        messages=messages,
+        max_tokens=50,
+        temperature=0.0
+    )
+    
+    description = response.choices[0].message.content.strip()
+    return description
 
 def upload_xml_content_to_s3(xml_content, s3_key):
     try:
@@ -242,7 +291,7 @@ def main():
         for url in urls:
             logger.info(f"Processing URL: {url}")
             xml_files = download_and_extract_xml_files(url)
-            records, no_total_assets_files = process_xml_files(xml_files, state_filter)
+            records, no_total_assets_files = process_xml_files(xml_files, state_filter, get_ntee_code_description)
             all_records.extend(records)
             files_without_total_assets.update(no_total_assets_files)
             total_files_processed += len(xml_files)
@@ -296,6 +345,16 @@ def main():
                     logger.info(f"Number of unique BusinessActivityCodes: {len(set(valid_codes))}")
                 else:
                     logger.warning("No valid BusinessActivityCode values found")
+            
+            elif field == 'NTEECode':
+                valid_codes = [code for code in field_values if code]
+                if valid_codes:
+                    code_counter = Counter(valid_codes)
+                    top_5_codes = code_counter.most_common(5)
+                    logger.info(f"Top 5 NTEECodes: {top_5_codes}")
+                    logger.info(f"Number of unique NTEECodes: {len(set(valid_codes))}")
+                else:
+                    logger.warning("No valid NTEECode values found")
 
         avg_fields = sum(len(r) for r in all_records) / len(all_records) if all_records else 0
         logger.info(f"Average fields per record: {avg_fields:.2f}")
