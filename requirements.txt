@@ -7,3 +7,4 @@ watchtower
 beautifulsoup4
 pandas
 mistral
+mistralai
