@@ -76,7 +76,8 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
                     if data and is_state_nonprofit(data, state_filter):
                         organization_name = data.get('OrganizationName', '')
                         mission_statement = data.get('MissionStatement', '')
-                        ntee_code_description = get_ntee_code_description(organization_name, mission_statement)
+                        ein = data.get('EIN', '')  # Get the EIN from the parsed data
+                        ntee_code_description = get_ntee_code_description(organization_name, mission_statement, ein)
                         data['NTEECodeDescription'] = ntee_code_description
 
                         records.append(data)

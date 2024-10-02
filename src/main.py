@@ -13,6 +13,7 @@ from io import BytesIO
 import pandas as pd
 import json
 from openai import OpenAI
+import requests
 
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
@@ -119,7 +120,26 @@ AVAILABLE_URLS = {
     ]
 }
 
-def get_ntee_code_description(organization_name, mission_statement):
+def get_ntee_code_from_api(ein):
+    url = f"https://projects.propublica.org/nonprofits/api/v2/organizations/{ein}.json"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            ntee_code = data['organization'].get('ntee_code')
+            if ntee_code:
+                return ntee_code
+    except Exception as e:
+        logger.error(f"Error fetching NTEE code from API for EIN {ein}: {str(e)}")
+    return None
+
+def get_ntee_code_description(organization_name, mission_statement, ein):
+    # First, try to get the NTEE code from the Nonprofit Explorer API
+    ntee_code = get_ntee_code_from_api(ein)
+    if ntee_code:
+        return f"NTEE Code: {ntee_code}"
+
+    # If API fails, fall back to OpenAI inference
     prompt = f"Infer the NTEE (National Taxonomy of Exempt Entities) code description into JSON data for the following nonprofit organization:\n\nOrganization Name: {organization_name}\n"
     
     if mission_statement:
