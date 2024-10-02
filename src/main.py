@@ -120,7 +120,7 @@ AVAILABLE_URLS = {
 }
 
 def get_ntee_code_description(organization_name, mission_statement):
-    prompt = f"Infer the NTEE (National Taxonomy of Exempt Entities) code description for the following nonprofit organization:\n\nOrganization Name: {organization_name}\n"
+    prompt = f"Infer the NTEE (National Taxonomy of Exempt Entities) code description into JSON data for the following nonprofit organization:\n\nOrganization Name: {organization_name}\n"
     
     if mission_statement:
         prompt += f"Mission Statement: {mission_statement}\n"
