@@ -13,12 +13,14 @@ This project aims to develop a predictive model for assessing the financial heal
 - Monitoring: CloudWatch alarms for process monitoring and cost management
 - Logging: Detailed logging in CloudWatch for error tracking and run summaries
 - Automated IRS Form 990 XML File Tracking: Monitors and reports new file releases
+- NTEE Code Interpretation: Uses AI to infer NTEE (National Taxonomy of Exempt Entities) codes from organization names and mission statements
 
 ## Recent Updates
 
-- Added business activity code field to data processing script
+- Switched from Mistral AI to OpenAI's GPT-4-mini for NTEE code interpretation
+- Removed BusinessActivityCode field from data processing to streamline analysis
+- Added NTEE code interpretation using AI for better categorization of nonprofits
 - Improved XML parsing robustness using namespace-agnostic XPath expressions
-- The original master file has been broken down into smaller, more manageable files for better organization and maintainability
 - The application now allows users to specify the state to filter for and input multiple URLs for processing
 - Implemented CloudWatch logging for specific, important log messages
 - Removed local file logging to health.log
@@ -40,6 +42,7 @@ This method allows our parser to find the correct elements regardless of namespa
 - Data Processing: Python (pandas, pyarrow)
 - Data Format: XML parsing, Parquet for storage
 - Web Scraping: BeautifulSoup4 for parsing IRS website
+- AI: OpenAI's GPT-4-mini for NTEE code interpretation
 
 ## Project Structure
 
@@ -86,6 +89,10 @@ nonprofit-financial-health-predictor/
    - Ensure you have the AWS CLI installed and configured with the necessary permissions for CloudWatch Logs.
    - Run `aws configure` and provide your AWS Access Key ID, Secret Access Key, and default region.
 
+4. Set up OpenAI API key:
+   - Obtain an API key from OpenAI
+   - Replace 'your-api-key-here' in src/main.py with your actual OpenAI API key
+
 ## Usage
 
 ### Main Application
@@ -104,6 +111,7 @@ The application will then:
 - Download and extract XML files from the provided URLs.
 - Process the XML files, filtering for nonprofits in the specified state.
 - Analyze the data and provide statistics on various financial metrics.
+- Infer NTEE codes for each nonprofit using AI.
 - Save the processed data to a Parquet file and upload it to Amazon S3.
 - Log important information to CloudWatch Logs.
 
@@ -127,6 +135,7 @@ The application logs specific, important messages to AWS CloudWatch Logs. These 
 - File statistics (e.g., files without certain financial data)
 - Data analysis results (e.g., average fields per record, financial metrics statistics)
 - S3 upload confirmations
+- NTEE code interpretation results
 
 To view these logs:
 1. Go to the AWS CloudWatch console.
@@ -147,6 +156,7 @@ TotalNetAssets: min=-1426990.0, max=111192741.0, avg=4526458.928571428
 TotalAssets: min=0.0, max=111238696.0, avg=5387384.130952381
 TotalRevenue: min=-74151.0, max=61455293.0, avg=1827346.619047619
 TotalExpenses: min=0.0, max=60192780.0, avg=1672105.2142857143
+Top 5 inferred NTEE codes: [('Education', 15), ('Human Services', 12), ('Health', 10), ('Arts and Culture', 8), ('Environment', 7)]
 
 ## Development
 
@@ -189,7 +199,8 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 - CloudWatch logging for important messages has been implemented.
 - Local file logging has been removed.
 - Automated tracking of new IRS Form 990 XML file releases is implemented.
-- Business activity code field has been added to data processing.
+- BusinessActivityCode field has been removed from data processing.
+- NTEE code interpretation using AI (OpenAI's GPT-4-mini) has been added.
 - XML parsing has been improved with namespace-agnostic XPath expressions.
 
 ## Next Steps
@@ -199,6 +210,7 @@ This project uses GitHub Actions for continuous integration and deployment. The 
 - Enhance test coverage and implement more unit tests.
 - Improve error handling and input validation.
 - Add more detailed documentation for each module.
+- Refine NTEE code interpretation accuracy.
 
 ## Contributing
 

@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 import boto3
 from io import BytesIO
 import pandas as pd
-from mistralai import Mistral
+import openai
 
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
@@ -23,10 +23,9 @@ from config import S3_BUCKET, S3_FOLDER, desired_fields
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Mistral AI setup
-api_key = 'RPsDrHBSNjhmPLUHmbKaZfySYEapVQEm'
-model = 'open-mixtral-8x22b'
-client = Mistral(api_key=api_key)
+# OpenAI setup
+openai.api_key = 'your-api-key-here'
+model = 'gpt-4-mini'
 
 # Available URLs for IRS Form 990 data
 AVAILABLE_URLS = {
@@ -115,49 +114,30 @@ AVAILABLE_URLS = {
     ]
 }
 
-def get_ntee_code_description(mission_description):
-    examples = [
-        {
-            "role": "user",
-            "content": "Nonprofit Name: Habitat for Humanity\nMission: Seeking to put God's love into action, Habitat for Humanity brings people together to build homes, communities and hope."
-        },
-        {
-            "role": "assistant",
-            "content": "Housing Development, Construction & Management"
-        },
-        {
-            "role": "user",
-            "content": "Nonprofit Name: American Red Cross\nMission: Prevents and alleviates human suffering in the face of emergencies by mobilizing the power of volunteers and the generosity of donors."
-        },
-        {
-            "role": "assistant",
-            "content": "Emergency Assistance"
-        },
-        {
-            "role": "user",
-            "content": "Nonprofit Name: Feeding America\nMission: To feed America's hungry through a nationwide network of member food banks and engage our country in the fight to end hunger."
-        },
-        {
-            "role": "assistant",
-            "content": "Food Banks & Pantries"
-        }
-    ]
+def get_ntee_code_description(organization_name, mission_statement):
+    prompt = f"Infer the NTEE (National Taxonomy of Exempt Entities) code description for the following nonprofit organization:\n\nOrganization Name: {organization_name}\n"
     
-    messages = examples.copy()
-    messages.append({
-        "role": "user",
-        "content": mission_description
-    })
+    if mission_statement:
+        prompt += f"Mission Statement: {mission_statement}\n"
+    else:
+        prompt += "No mission statement available. Please infer based on the organization name and your knowledge of nonprofit sectors.\n"
     
-    response = client.chat.complete(
-        model=model,
-        messages=messages,
-        max_tokens=50,
-        temperature=0.0
-    )
-    
-    description = response.choices[0].message.content.strip()
-    return description
+    prompt += "\nProvide a brief NTEE code description (e.g., 'Housing Development, Construction & Management', 'Emergency Assistance', 'Food Banks & Pantries') based on the information given."
+
+    try:
+        response = openai.Completion.create(
+            engine=model,
+            prompt=prompt,
+            max_tokens=50,
+            n=1,
+            stop=None,
+            temperature=0.0
+        )
+        description = response.choices[0].text.strip()
+        return description
+    except Exception as e:
+        logger.error(f"Error inferring NTEE code: {str(e)}")
+        return "Unknown"
 
 def upload_xml_content_to_s3(xml_content, s3_key):
     try:
