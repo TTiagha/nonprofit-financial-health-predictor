@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 logger = logging.getLogger(__name__)
 
 # OpenAI setup
-client = OpenAI(api_key='')
+client = OpenAI(api_key=api_key)
 model = 'gpt-4o-mini'
 
 # Available URLs for IRS Form 990 data
