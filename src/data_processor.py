@@ -1,6 +1,7 @@
 # data_processor.py
 
 import time
+import json
 from lxml import etree
 from logger import logger
 from config import (
@@ -76,8 +77,14 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
                     if data and is_state_nonprofit(data, state_filter):
                         organization_name = data.get('OrganizationName', '')
                         mission_statement = data.get('MissionStatement', '')
-                        ntee_code = get_ntee_code_description(organization_name, mission_statement)
-                        data['NTEECode'] = ntee_code
+                        ntee_code_json = get_ntee_code_description(organization_name, mission_statement)
+                        
+                        try:
+                            ntee_code_data = json.loads(ntee_code_json)
+                            data['NTEECodeDescription'] = ntee_code_data.get('ntee_code_description', 'Unknown')
+                        except json.JSONDecodeError:
+                            logger.error(f"Failed to parse NTEE code JSON for {filename}: {ntee_code_json}")
+                            data['NTEECodeDescription'] = 'Unknown'
 
                         records.append(data)
                         state_files.add(filename)

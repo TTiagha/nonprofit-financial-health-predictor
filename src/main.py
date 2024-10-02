@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 import boto3
 from io import BytesIO
 import pandas as pd
-import openai
+from openai import OpenAI
 
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
@@ -24,8 +24,8 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 logger = logging.getLogger(__name__)
 
 # OpenAI setup
-openai.api_key = 'your-api-key-here'
-model = 'gpt-4-mini'
+client = OpenAI(api_key='sk-WqkWehUyMf8DVwtnIQsBW2FJbfn_pASkDud3H2vbxGT3BlbkFJRCkFImCLhfJudrPVEwWFeQn2hp-_AhcBlPEkD8mTkAe')
+model = 'gpt-4o-mini'
 
 # Available URLs for IRS Form 990 data
 AVAILABLE_URLS = {
@@ -125,19 +125,20 @@ def get_ntee_code_description(organization_name, mission_statement):
     prompt += "\nProvide a brief NTEE code description (e.g., 'Housing Development, Construction & Management', 'Emergency Assistance', 'Food Banks & Pantries') based on the information given."
 
     try:
-        response = openai.Completion.create(
-            engine=model,
-            prompt=prompt,
-            max_tokens=50,
-            n=1,
-            stop=None,
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are an expert in nonprofit organizations and NTEE codes."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"},
             temperature=0.0
         )
-        description = response.choices[0].text.strip()
+        description = response.choices[0].message.content
         return description
     except Exception as e:
         logger.error(f"Error inferring NTEE code: {str(e)}")
-        return "Unknown"
+        return '{"ntee_code_description": "Unknown"}'
 
 def upload_xml_content_to_s3(xml_content, s3_key):
     try:
