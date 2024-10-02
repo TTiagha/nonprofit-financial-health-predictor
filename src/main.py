@@ -11,7 +11,8 @@ import pyarrow.parquet as pq
 import boto3
 from io import BytesIO
 import pandas as pd
-import openai
+import json
+from openai import OpenAI
 
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
@@ -24,6 +25,10 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 logger = logging.getLogger(__name__)
 
 # OpenAI setup
+api_key = os.environ.get('OPENAI_API_KEY')
+if not api_key:
+    raise ValueError("OPENAI_API_KEY environment variable is not set")
+
 client = OpenAI(api_key=api_key)
 model = 'gpt-4o-mini'
 
@@ -125,16 +130,17 @@ def get_ntee_code_description(organization_name, mission_statement):
     prompt += "\nProvide a brief NTEE code description (e.g., 'Housing Development, Construction & Management', 'Emergency Assistance', 'Food Banks & Pantries') based on the information given."
 
     try:
-        response = openai.Completion.create(
-            engine=model,
-            prompt=prompt,
-            max_tokens=50,
-            n=1,
-            stop=None,
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are an expert in nonprofit organizations and NTEE codes."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"},
             temperature=0.0
         )
-        description = response.choices[0].text.strip()
-        return description
+        description_json = json.loads(response.choices[0].message.content)
+        return description_json.get('ntee_code_description', 'Unknown')
     except Exception as e:
         logger.error(f"Error inferring NTEE code: {str(e)}")
         return "Unknown"
@@ -331,15 +337,15 @@ def main():
                 else:
                     logger.warning("No valid MissionStatement values found")
             
-            elif field == 'NTEECode':
+            elif field == 'NTEECodeDescription':
                 valid_codes = [code for code in field_values if code]
                 if valid_codes:
                     code_counter = Counter(valid_codes)
                     top_5_codes = code_counter.most_common(5)
-                    logger.info(f"Top 5 NTEECodes: {top_5_codes}")
-                    logger.info(f"Number of unique NTEECodes: {len(set(valid_codes))}")
+                    logger.info(f"Top 5 NTEE Code Descriptions: {top_5_codes}")
+                    logger.info(f"Number of unique NTEE Code Descriptions: {len(set(valid_codes))}")
                 else:
-                    logger.warning("No valid NTEECode values found")
+                    logger.warning("No valid NTEE Code Descriptions found")
 
         avg_fields = sum(len(r) for r in all_records) / len(all_records) if all_records else 0
         logger.info(f"Average fields per record: {avg_fields:.2f}")
