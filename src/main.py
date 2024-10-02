@@ -182,6 +182,9 @@ def save_to_s3_parquet(records):
     logger.info('Converting records to Parquet format.')
     new_df = pd.DataFrame(records)
 
+    # Convert NTEECodeDescription to string
+    new_df['NTEECodeDescription'] = new_df['NTEECodeDescription'].astype(str)
+
     s3_key = f'{S3_FOLDER}/irs990_data.parquet'
 
     s3_client = boto3.client('s3')
@@ -196,6 +199,7 @@ def save_to_s3_parquet(records):
         existing_data = download_file_from_s3(s3_key)
         existing_df = pd.read_parquet(BytesIO(existing_data))
         existing_df['EIN'] = existing_df['EIN'].astype(str)
+        existing_df['NTEECodeDescription'] = existing_df['NTEECodeDescription'].astype(str)
 
         new_df['EIN'] = new_df['EIN'].astype(str)
 
@@ -210,8 +214,21 @@ def save_to_s3_parquet(records):
         merged_df = new_df
 
     merged_df['EIN'] = merged_df['EIN'].astype(str)
+    merged_df['NTEECodeDescription'] = merged_df['NTEECodeDescription'].astype(str)
 
-    merged_table = pa.Table.from_pandas(merged_df)
+    # Convert DataFrame to PyArrow Table
+    try:
+        merged_table = pa.Table.from_pandas(merged_df)
+    except pa.lib.ArrowInvalid as e:
+        logger.error(f"Error converting DataFrame to PyArrow Table: {str(e)}")
+        logger.info("Attempting to identify problematic columns...")
+        for column in merged_df.columns:
+            try:
+                pa.array(merged_df[column])
+            except pa.lib.ArrowInvalid as col_error:
+                logger.error(f"Error in column '{column}': {str(col_error)}")
+                logger.info(f"Sample data for '{column}': {merged_df[column].head()}")
+        return
 
     local_parquet_file = 'temp_irs990_data.parquet'
     pq.write_table(merged_table, local_parquet_file)
