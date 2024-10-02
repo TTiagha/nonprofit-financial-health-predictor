@@ -232,47 +232,4 @@ desired_fields = {
             ]
         }
     },
-    'BusinessActivityCode': {
-        'type': 'string',
-        'paths': {
-            '990': [
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="BusinessActivityCode"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="ProgramServiceAccomplishmentGrp"]/*[local-name()="ActivityCd"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="MissionDesc"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="ActivityOrMissionDesc"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="MissionStatementTxt"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990"]/*[local-name()="PrimaryExemptPurposeTxt"]/text()',
-            ],
-            '990EZ': [
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="BusinessActivityCode"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="ActivityCd"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="MissionDescription"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990EZ"]/*[local-name()="PrimaryExemptPurposeTxt"]/text()',
-            ],
-            '990PF': [
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990PF"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990PF"]/*[local-name()="BusinessActivityCode"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990PF"]/*[local-name()="ActivityCd"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990PF"]/*[local-name()="PrimaryExemptPurposeTxt"]/text()',
-            ],
-            '990T': [
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990T"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990T"]/*[local-name()="BusinessActivityCode"]/text()',
-                '//*[local-name()="ReturnData"]/*[local-name()="IRS990T"]/*[local-name()="MissionDescription"]/text()',
-            ],
-            'Common': [
-                '//*[local-name()="ReturnHeader"]/*[local-name()="PrincipalBusinessActivityCd"]/text()',
-                '//*[local-name()="ReturnHeader"]/*[local-name()="BusinessActivityCode"]/text()',
-                '//*[contains(local-name(), "PrincipalBusinessActivityCd")]/text()',
-                '//*[contains(local-name(), "BusinessActivityCode")]/text()',
-                '//*[contains(local-name(), "ActivityCd")]/text()',
-                '//*[contains(local-name(), "MissionDesc")]/text()',
-                '//*[contains(local-name(), "ActivityOrMissionDesc")]/text()',
-                '//*[contains(local-name(), "MissionStatement")]/text()',
-                '//*[contains(local-name(), "PrimaryExemptPurposeTxt")]/text()',
-            ]
-        }
-    },
 }

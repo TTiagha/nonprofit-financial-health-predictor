@@ -21,7 +21,6 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
     start_time = time.time()
 
     total_returns_processed = 0
-    total_returns_with_bac = 0
     field_extraction_stats = {field: 0 for field in desired_fields.keys()}
 
     for filename, xml_content in xml_files.items():
@@ -42,7 +41,6 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
             file_missing_net_assets = False
             file_missing_total_assets = False
             returns_processed_in_file = 0
-            returns_with_bac_in_file = 0
 
             for i, Return in enumerate(Returns):
                 logger.info(f'Processing Return {i+1} in {filename}')
@@ -73,20 +71,12 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
                         if 'TotalNetAssets' not in data or data['TotalNetAssets'] is None:
                             file_missing_net_assets = True
                         
-                        if 'BusinessActivityCode' in data and data['BusinessActivityCode']:
-                            total_returns_with_bac += 1
-                            returns_with_bac_in_file += 1
-                            logger.info(f"BusinessActivityCode found in {filename}, Return {i+1}: {data.get('BusinessActivityCode')}")
-                        else:
-                            logger.warning(f"BusinessActivityCode not found in {filename}, Return {i+1}")
-                        
                         logger.info(f"Inferred NTEE Code for {filename}, Return {i+1}: {ntee_code}")
                     
                 except Exception as e:
                     logger.error(f'Error processing Return {i+1} in {filename}: {e}')
 
             logger.info(f"Processed {returns_processed_in_file} Returns in {filename}")
-            logger.info(f"Returns with BusinessActivityCode: {returns_with_bac_in_file}/{returns_processed_in_file}")
 
             if file_missing_revenue:
                 no_revenue_files.add(filename)
@@ -108,7 +98,6 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
     end_time = time.time()
     logger.info(f'Processed {len(records)} {state_filter} nonprofit records from {len(xml_files)} files in {end_time - start_time:.2f} seconds')
     logger.info(f'Total Returns processed: {total_returns_processed}')
-    logger.info(f'Total Returns with BusinessActivityCode: {total_returns_with_bac}/{total_returns_processed}')
     logger.info(f'Files without TotalRevenue: {len(no_revenue_files)}')
     logger.info(f'Files without TotalExpenses: {len(no_exp_files)}')
     logger.info(f'Files without TotalAssets: {len(no_ass_files)}')

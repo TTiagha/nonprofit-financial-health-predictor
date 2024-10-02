@@ -336,16 +336,6 @@ def main():
                 else:
                     logger.warning("No valid MissionStatement values found")
             
-            elif field == 'BusinessActivityCode':
-                valid_codes = [code for code in field_values if code]
-                if valid_codes:
-                    code_counter = Counter(valid_codes)
-                    top_5_codes = code_counter.most_common(5)
-                    logger.info(f"Top 5 BusinessActivityCodes: {top_5_codes}")
-                    logger.info(f"Number of unique BusinessActivityCodes: {len(set(valid_codes))}")
-                else:
-                    logger.warning("No valid BusinessActivityCode values found")
-            
             elif field == 'NTEECode':
                 valid_codes = [code for code in field_values if code]
                 if valid_codes:
