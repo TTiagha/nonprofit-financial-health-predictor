@@ -20,7 +20,7 @@ from s3_utils import upload_file_to_s3, download_file_from_s3, get_s3_client
 from config import S3_BUCKET, S3_FOLDER, desired_fields
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # OpenAI setup

@@ -60,6 +60,7 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
 
             Returns = tree.xpath('//irs:Return', namespaces=ns)
             if not Returns:
+                logger.debug(f"No Return elements found in {filename}")
                 continue
 
             file_missing_revenue = False
@@ -71,13 +72,16 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
                 total_returns_processed += 1
                 try:
                     data = parse_return(Return, ns, filename)
+                    logger.debug(f"Parsed data for {filename}: {data}")
                     if data and is_state_nonprofit(data, state_filter):
-                        mission_description = f"Nonprofit Name: {data.get('OrganizationName', '')}\nMission: {data.get('MissionStatement', '')}"
-                        ntee_code = get_ntee_code_description(mission_description)
+                        organization_name = data.get('OrganizationName', '')
+                        mission_statement = data.get('MissionStatement', '')
+                        ntee_code = get_ntee_code_description(organization_name, mission_statement)
                         data['NTEECode'] = ntee_code
 
                         records.append(data)
                         state_files.add(filename)
+                        logger.info(f"Added record for {state_filter} nonprofit from {filename}")
 
                         for field in desired_fields.keys():
                             if field in data and data[field] is not None:
@@ -91,6 +95,8 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
                             file_missing_assets = True
                         if 'TotalNetAssets' not in data or data['TotalNetAssets'] is None:
                             file_missing_net_assets = True
+                    else:
+                        logger.debug(f"Record from {filename} did not match state filter {state_filter} or had no data")
                     
                 except Exception as e:
                     logger.error(f'Error processing Return in {filename}: {e}')

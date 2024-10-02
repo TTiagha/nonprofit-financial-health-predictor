@@ -103,9 +103,15 @@ def is_state_nonprofit(data, state):
     Returns:
         bool: True if the nonprofit is from the specified state, False otherwise.
     """
+    logger.debug(f"Checking if nonprofit is from state: {state}")
+    logger.debug(f"Nonprofit data: {data}")
+
     state_in_data = data.get('State')
     if state_in_data:
-        return state_in_data.upper() == state.upper()
+        logger.debug(f"State found in data: {state_in_data}")
+        result = state_in_data.upper() == state.upper()
+        logger.debug(f"Is nonprofit from {state}? {result}")
+        return result
     else:
         logger.debug(f"State not found in data. Cannot determine if nonprofit is from {state}.")
         return False
