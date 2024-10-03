@@ -17,6 +17,8 @@ import csv
 import openai
 from dotenv import load_dotenv
 
+from available_urls import AVAILABLE_URLS
+
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
 from data_analyzer import analyze_data
@@ -39,93 +41,8 @@ unsuccessful_api_calls = 0
 openai_ntee_determinations = 0
 no_ntee_code_found = 0
 
-# Available URLs for IRS Form 990 data
-AVAILABLE_URLS = {
-    "2024": [
-        "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_01A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_02A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_03A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_04A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_05A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_05B.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_06A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_07A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_08A.zip",
-    ],
-    "2023": [
-        "https://donationtransparency.org/wp-content/uploads/2024/10/Test.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_01A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_02A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_03A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_04A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_05A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_05B.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_06A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_07A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_08A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_09A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_10A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_11A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_11B.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_11C.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_12A.zip",
-    ],
-    "2022": [
-        "https://apps.irs.gov/pub/epostcard/990/xml/2022/2022_TEOS_XML_01A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2022/2022_TEOS_XML_01B.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2022/2022_TEOS_XML_01C.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2022/2022_TEOS_XML_01D.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2022/2022_TEOS_XML_01E.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2022/2022_TEOS_XML_01F.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2022/2022_TEOS_XML_11A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2022/2022_TEOS_XML_11B.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2022/2022_TEOS_XML_11C.zip",
-    ],
-    "2021": [
-        "https://apps.irs.gov/pub/epostcard/990/xml/2021/2021_TEOS_XML_01A.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2021/2021_TEOS_XML_01B.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2021/2021_TEOS_XML_01C.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2021/2021_TEOS_XML_01D.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2021/2021_TEOS_XML_01E.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2021/2021_TEOS_XML_01F.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2021/2021_TEOS_XML_01G.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2021/2021_TEOS_XML_01H.zip",
-    ],
-    "2020": [
-        "https://apps.irs.gov/pub/epostcard/990/xml/2020/2020_TEOS_XML_CT1.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2020/download990xml_2020_1.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2020/download990xml_2020_2.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2020/download990xml_2020_3.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2020/download990xml_2020_4.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2020/download990xml_2020_5.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2020/download990xml_2020_6.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2020/download990xml_2020_7.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2020/download990xml_2020_8.zip",
-    ],
-    "2019": [
-        "https://apps.irs.gov/pub/epostcard/990/xml/2019/2019_TEOS_XML_CT1.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2019/download990xml_2019_1.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2019/download990xml_2019_2.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2019/download990xml_2019_3.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2019/download990xml_2019_4.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2019/download990xml_2019_5.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2019/download990xml_2019_6.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2019/download990xml_2019_7.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2019/download990xml_2019_8.zip",
-    ],
-    "2018": [
-        "https://apps.irs.gov/pub/epostcard/990/xml/2018/2018_TEOS_XML_CT1.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2018/2018_TEOS_XML_CT2.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2018/2018_TEOS_XML_CT3.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_1.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_2.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_3.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_4.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_5.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_6.zip",
-        "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_7.zip",
-    ]
-}
+# List to store OpenAI inference attempts
+openai_inference_attempts = []
 
 def get_ntee_code_from_api(ein):
     global successful_api_calls, unsuccessful_api_calls
@@ -176,6 +93,13 @@ def infer_ntee_code_with_gpt4(organization_name, mission_statement):
     Where "ntee_code" is your inferred NTEE code, and "confidence" is a number between 0 and 1 indicating your confidence in this inference.
     """
 
+    inference_attempt = {
+        "organization": organization_name,
+        "mission": mission_statement,
+        "response": None,
+        "error": None
+    }
+
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4",
@@ -188,9 +112,13 @@ def infer_ntee_code_with_gpt4(organization_name, mission_statement):
         )
         
         result = json.loads(response.choices[0].message.content)
+        inference_attempt["response"] = result
+        openai_inference_attempts.append(inference_attempt)
         return result["ntee_code"], result["confidence"]
     except Exception as e:
         logger.error(f"Error inferring NTEE code with GPT-4: {str(e)}")
+        inference_attempt["error"] = str(e)
+        openai_inference_attempts.append(inference_attempt)
         return None, 0.0
 
 def get_ntee_code_description(organization_name, mission_statement, ein):
@@ -344,6 +272,19 @@ def get_user_input():
     
     return state, selected_urls
 
+def print_openai_inference_summary():
+    print("\n--- OpenAI Inference Summary ---")
+    for i, attempt in enumerate(openai_inference_attempts, 1):
+        print(f"\nAttempt {i}:")
+        print(f"Organization: {attempt['organization']}")
+        print(f"Mission: {attempt['mission']}")
+        if attempt['response']:
+            print(f"Inferred NTEE Code: {attempt['response']['ntee_code']}")
+            print(f"Confidence: {attempt['response']['confidence']}")
+        if attempt['error']:
+            print(f"Error: {attempt['error']}")
+        print("-" * 50)
+
 def main():
     global successful_api_calls, unsuccessful_api_calls, openai_ntee_determinations, no_ntee_code_found
     logger.info(f"Starting Nonprofit Financial Health Predictor at {datetime.now()}")
@@ -407,21 +348,24 @@ def main():
 
         # Log summary of API calls and NTEE code determinations
         total_api_calls = successful_api_calls + unsuccessful_api_calls
-        logger.info(f"Summary of API calls and NTEE code determinations:")
-        logger.info(f"Total Nonprofit Explorer API calls: {total_api_calls}")
-        logger.info(f"Successful Nonprofit Explorer API calls: {successful_api_calls}")
-        logger.info(f"Unsuccessful Nonprofit Explorer API calls: {unsuccessful_api_calls}")
-        logger.info(f"NTEE codes determined by OpenAI: {openai_ntee_determinations}")
-        logger.info(f"Records with no NTEE code found: {no_ntee_code_found}")
+        print(f"\nSummary of API calls and NTEE code determinations:")
+        print(f"Total Nonprofit Explorer API calls: {total_api_calls}")
+        print(f"Successful Nonprofit Explorer API calls: {successful_api_calls}")
+        print(f"Unsuccessful Nonprofit Explorer API calls: {unsuccessful_api_calls}")
+        print(f"NTEE codes determined by OpenAI: {openai_ntee_determinations}")
+        print(f"Records with no NTEE code found: {no_ntee_code_found}")
 
         if total_api_calls > 0:
             success_rate = (successful_api_calls / total_api_calls) * 100
-            logger.info(f"Nonprofit Explorer API success rate: {success_rate:.2f}%")
+            print(f"Nonprofit Explorer API success rate: {success_rate:.2f}%")
 
         total_ntee_attempts = total_api_calls + openai_ntee_determinations
         if total_ntee_attempts > 0:
             ntee_success_rate = ((successful_api_calls + openai_ntee_determinations) / total_ntee_attempts) * 100
-            logger.info(f"Overall NTEE code determination success rate: {ntee_success_rate:.2f}%")
+            print(f"Overall NTEE code determination success rate: {ntee_success_rate:.2f}%")
+
+        # Print OpenAI inference summary
+        print_openai_inference_summary()
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
