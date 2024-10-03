@@ -12,8 +12,8 @@ import boto3
 from io import BytesIO
 import pandas as pd
 import json
-from openai import OpenAI
 import requests
+import csv
 
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
@@ -25,18 +25,9 @@ from config import S3_BUCKET, S3_FOLDER, desired_fields
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# OpenAI setup
-api_key = os.environ.get('OPENAI_API_KEY')
-if not api_key:
-    raise ValueError("OPENAI_API_KEY environment variable is not set")
-
-client = OpenAI(api_key=api_key)
-model = 'gpt-4o-mini'
-
 # Global counters for API calls
 successful_api_calls = 0
 unsuccessful_api_calls = 0
-openai_extractions = 0
 
 # Available URLs for IRS Form 990 data
 AVAILABLE_URLS = {
@@ -136,6 +127,7 @@ def get_ntee_code_from_api(ein):
         ntee_code = data['organization'].get('ntee_code')
         if ntee_code:
             successful_api_calls += 1
+            time.sleep(0.5)  # Add delay to avoid throttling
             return ntee_code
         else:
             logger.warning(f"API response for EIN {ein} is missing NTEE code")
@@ -146,80 +138,26 @@ def get_ntee_code_from_api(ein):
     unsuccessful_api_calls += 1
     return None
 
-def get_ntee_description(ntee_code, organization_name, mission_statement):
-    global openai_extractions
-    prompt = f"""Given the NTEE (National Taxonomy of Exempt Entities) code and information about a nonprofit organization, provide the NTEE description.
-
-NTEE Code: {ntee_code}
-Organization Name: {organization_name}
-Mission Statement: {mission_statement if mission_statement else "Not provided"}
-
-Based on this information, especially the NTEE code, provide the official NTEE description
-
-Output your response in JSON format, including both the NTEE code and its description. Use the following structure:
-
-{{
-  "ntee_code": "{ntee_code}",
-  "ntee_description": "Description of the NTEE category"
-}}
-"""
-
+def get_ntee_description_from_csv(ntee_code):
+    csv_path = os.path.join(os.path.dirname(__file__), 'ntee_library.csv')
     try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are an expert in nonprofit organizations and NTEE codes."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.0
-        )
-        result = json.loads(response.choices[0].message.content)
-        openai_extractions += 1
-        return result
+        with open(csv_path, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                if row['NTEE Code'] == ntee_code:
+                    return row['Description']
     except Exception as e:
-        logger.error(f"Error inferring NTEE description: {str(e)}")
-        return {"ntee_code": ntee_code, "ntee_description": "Error in inference"}
+        logger.error(f"Error reading NTEE description from CSV for code {ntee_code}: {str(e)}")
+    return "Description not found"
 
 def get_ntee_code_description(organization_name, mission_statement, ein):
     ntee_code = get_ntee_code_from_api(ein)
     if ntee_code:
-        return get_ntee_description(ntee_code, organization_name, mission_statement)
+        ntee_description = get_ntee_description_from_csv(ntee_code)
+        return {"ntee_code": ntee_code, "ntee_description": ntee_description}
     else:
-        # If API fails to provide NTEE code, use OpenAI to infer both code and description
-        prompt = f"""Determine the National Taxonomy of Exempt Entities (NTEE) code and description for a nonprofit organization based on the following information:
-
-Organization Name: {organization_name}
-Mission Statement: {mission_statement if mission_statement else "Not provided"}
-EIN: {ein}
-
-Analyze the organization's name and mission statement (if provided). Consider the main focus area of the organization (e.g., education, health, environment) and identify the specific activities or services the organization provides. Match these characteristics to the most appropriate NTEE category and subcategory.
-
-Provide your response in JSON format using the following structure:
-
-{{
-  "ntee_code": "X##",
-  "ntee_description": "Brief description of the NTEE category"
-}}
-
-Ensure that the NTEE code follows the format of a letter followed by two digits (e.g., A31, B24, C50)."""
-
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": "You are an expert in nonprofit organizations and NTEE codes."},
-                    {"role": "user", "content": prompt}
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.0
-            )
-            result = json.loads(response.choices[0].message.content)
-            openai_extractions += 1
-            return result
-        except Exception as e:
-            logger.error(f"Error inferring NTEE code and description: {str(e)}")
-            return {"ntee_code": "Unknown", "ntee_description": "Error in inference"}
+        logger.warning(f"Failed to get NTEE code for EIN {ein}")
+        return {"ntee_code": "Unknown", "ntee_description": "Unknown"}
 
 def upload_xml_content_to_s3(xml_content, s3_key):
     try:
@@ -312,7 +250,12 @@ def save_to_s3_parquet(records):
     os.remove(local_parquet_file)
 
 def get_user_input():
-    state = input("Enter the state abbreviation to filter for (e.g., GA): ").upper()
+    state = input("Enter the state abbreviation to filter for (e.g., GA), or press Enter to process all states: ").upper()
+    if state == "":
+        state = None
+        logger.info("User chose to process all states")
+    else:
+        logger.info(f"User selected state filter: {state}")
     
     print("\nAvailable years:")
     for year in AVAILABLE_URLS.keys():
@@ -349,14 +292,14 @@ def get_user_input():
     return state, selected_urls
 
 def main():
-    global successful_api_calls, unsuccessful_api_calls, openai_extractions
+    global successful_api_calls, unsuccessful_api_calls
     logger.info(f"Starting Nonprofit Financial Health Predictor at {datetime.now()}")
 
     try:
         run_new990_check()
 
         state_filter, urls = get_user_input()
-        logger.info(f"User selected state filter: {state_filter}")
+        logger.info(f"User selected state filter: {state_filter if state_filter else 'All states'}")
         logger.info(f"User selected {len(urls)} URLs to process")
         
         all_records = []
@@ -387,7 +330,7 @@ def main():
 
         end_time = time.time()
         processing_time = end_time - start_time
-        logger.info(f"Processed {len(all_records)} {state_filter} nonprofit records from {total_files_processed} files in {processing_time:.2f} seconds")
+        logger.info(f"Processed {len(all_records)} {'all states' if state_filter is None else state_filter} nonprofit records from {total_files_processed} files in {processing_time:.2f} seconds")
     
         if not all_records:
             logger.warning("No records were processed. This could be due to no matching records for the selected state or issues with data extraction.")
@@ -409,13 +352,12 @@ def main():
 
         save_to_s3_parquet(all_records)
 
-        # Log summary of API calls and extractions
+        # Log summary of API calls
         total_api_calls = successful_api_calls + unsuccessful_api_calls
-        logger.info(f"Summary of API calls and extractions:")
+        logger.info(f"Summary of API calls:")
         logger.info(f"Total Nonprofit Explorer API calls: {total_api_calls}")
         logger.info(f"Successful Nonprofit Explorer API calls: {successful_api_calls}")
         logger.info(f"Unsuccessful Nonprofit Explorer API calls: {unsuccessful_api_calls}")
-        logger.info(f"NTEE codes extracted via OpenAI API: {openai_extractions}")
 
         if total_api_calls > 0:
             success_rate = (successful_api_calls / total_api_calls) * 100
