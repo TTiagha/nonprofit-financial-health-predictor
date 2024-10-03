@@ -124,58 +124,45 @@ AVAILABLE_URLS = {
         "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_6.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_7.zip",
     ]
-    # ... [rest of the AVAILABLE_URLS dictionary remains unchanged]
 }
 
 def get_ntee_code_from_api(ein):
     global successful_api_calls, unsuccessful_api_calls
     url = f"https://projects.propublica.org/nonprofits/api/v2/organizations/{ein}.json"
     try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            ntee_code = data['organization'].get('ntee_code')
-            ntee_description = data['organization'].get('ntee_description')
-            if ntee_code and ntee_description:
-                successful_api_calls += 1
-                return ntee_code, ntee_description
-    except Exception as e:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        ntee_code = data['organization'].get('ntee_code')
+        if ntee_code:
+            successful_api_calls += 1
+            return ntee_code
+        else:
+            logger.warning(f"API response for EIN {ein} is missing NTEE code")
+    except requests.exceptions.RequestException as e:
         logger.error(f"Error fetching NTEE code from API for EIN {ein}: {str(e)}")
+    except (KeyError, ValueError) as e:
+        logger.error(f"Error parsing API response for EIN {ein}: {str(e)}")
     unsuccessful_api_calls += 1
-    return None, None
+    return None
 
-def get_ntee_code_description(organization_name, mission_statement, ein):
+def get_ntee_description(ntee_code, organization_name, mission_statement):
     global openai_extractions
-    # First, try to get the NTEE code from the Nonprofit Explorer API
-    ntee_code, ntee_description = get_ntee_code_from_api(ein)
-    if ntee_code and ntee_description:
-        return {"ntee_code": ntee_code, "ntee_description": ntee_description}
+    prompt = f"""Given the NTEE (National Taxonomy of Exempt Entities) code and information about a nonprofit organization, provide the NTEE description.
 
-    # If API fails, fall back to OpenAI inference
-    prompt = f"""You are tasked with determining the National Taxonomy of Exempt Entities (NTEE) code and description for a nonprofit organization based on the information provided. You will be given the organization's EIN (Employer Identification Number), name, and possibly its mission statement. Your goal is to infer the most appropriate NTEE code and description, or use your existing knowledge if you're certain about the classification.
+NTEE Code: {ntee_code}
+Organization Name: {organization_name}
+Mission Statement: {mission_statement if mission_statement else "Not provided"}
 
-Here's the information you'll be working with:
-
-EIN: <EIN>{ein}</EIN>
-Nonprofit Name: <NONPROFIT_NAME>{organization_name}</NONPROFIT_NAME>
-Mission Statement (if provided): <MISSION_STATEMENT>{mission_statement if mission_statement else "Not provided"}</MISSION_STATEMENT>
-
-To determine the NTEE code and description:
-1. Analyze the nonprofit's name and mission statement (if provided).
-2. Consider the main focus area of the organization (e.g., education, health, environment).
-3. Identify the specific activities or services the organization provides.
-4. Match these characteristics to the most appropriate NTEE category and subcategory.
-
-If you're certain about the classification based on your existing knowledge (e.g., for well-known organizations), you may use that information directly.
+Based on this information, especially the NTEE code, provide the official NTEE description
 
 Output your response in JSON format, including both the NTEE code and its description. Use the following structure:
 
 {{
-  "ntee_code": "X##",
+  "ntee_code": "{ntee_code}",
   "ntee_description": "Description of the NTEE category"
 }}
-
-Now, based on the information provided about the nonprofit organization, determine the most appropriate NTEE code and description. Output your response in the specified JSON format."""
+"""
 
     try:
         response = client.chat.completions.create(
@@ -191,8 +178,48 @@ Now, based on the information provided about the nonprofit organization, determi
         openai_extractions += 1
         return result
     except Exception as e:
-        logger.error(f"Error inferring NTEE code: {str(e)}")
-        return {"ntee_code": "Unknown", "ntee_description": "Error in inference"}
+        logger.error(f"Error inferring NTEE description: {str(e)}")
+        return {"ntee_code": ntee_code, "ntee_description": "Error in inference"}
+
+def get_ntee_code_description(organization_name, mission_statement, ein):
+    ntee_code = get_ntee_code_from_api(ein)
+    if ntee_code:
+        return get_ntee_description(ntee_code, organization_name, mission_statement)
+    else:
+        # If API fails to provide NTEE code, use OpenAI to infer both code and description
+        prompt = f"""Determine the National Taxonomy of Exempt Entities (NTEE) code and description for a nonprofit organization based on the following information:
+
+Organization Name: {organization_name}
+Mission Statement: {mission_statement if mission_statement else "Not provided"}
+EIN: {ein}
+
+Analyze the organization's name and mission statement (if provided). Consider the main focus area of the organization (e.g., education, health, environment) and identify the specific activities or services the organization provides. Match these characteristics to the most appropriate NTEE category and subcategory.
+
+Provide your response in JSON format using the following structure:
+
+{{
+  "ntee_code": "X##",
+  "ntee_description": "Brief description of the NTEE category"
+}}
+
+Ensure that the NTEE code follows the format of a letter followed by two digits (e.g., A31, B24, C50)."""
+
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "You are an expert in nonprofit organizations and NTEE codes."},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.0
+            )
+            result = json.loads(response.choices[0].message.content)
+            openai_extractions += 1
+            return result
+        except Exception as e:
+            logger.error(f"Error inferring NTEE code and description: {str(e)}")
+            return {"ntee_code": "Unknown", "ntee_description": "Error in inference"}
 
 def upload_xml_content_to_s3(xml_content, s3_key):
     try:
