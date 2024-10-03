@@ -38,6 +38,11 @@ load_dotenv()
 # Set up OpenAI API
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# Set up CloudWatch Logs client
+cloudwatch_logs = boto3.client('logs')
+LOG_GROUP_NAME = "/nonprofit-financial-health-predictor/summary"
+LOG_STREAM_NAME = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
 # Global counters for API calls and NTEE code determination
 successful_api_calls = 0
 unsuccessful_api_calls = 0
@@ -46,6 +51,23 @@ no_ntee_code_found = 0
 
 # List to store OpenAI inference attempts
 openai_inference_attempts = []
+
+def send_logs_to_cloudwatch(message):
+    try:
+        cloudwatch_logs.create_log_stream(logGroupName=LOG_GROUP_NAME, logStreamName=LOG_STREAM_NAME)
+    except cloudwatch_logs.exceptions.ResourceAlreadyExistsException:
+        pass  # Log stream already exists
+
+    cloudwatch_logs.put_log_events(
+        logGroupName=LOG_GROUP_NAME,
+        logStreamName=LOG_STREAM_NAME,
+        logEvents=[
+            {
+                'timestamp': int(round(time.time() * 1000)),
+                'message': message
+            }
+        ]
+    )
 
 def get_ntee_code_from_api(ein):
     global successful_api_calls, unsuccessful_api_calls
@@ -123,11 +145,33 @@ def infer_ntee_code_with_gpt4(organization_name, mission_statement):
             openai_inference_attempts.append(inference_attempt)
             return result["ntee_code"], result["confidence"]
         except json.JSONDecodeError as json_error:
-            logger.error(f"Error parsing JSON from GPT-4 response: {str(json_error)}")
-            logger.error(f"Response content: {response.choices[0].message.content}")
-            inference_attempt["error"] = f"JSON parsing error: {str(json_error)}"
-            openai_inference_attempts.append(inference_attempt)
-            return None, 0.0
+            logger.warning(f"Error parsing JSON from GPT-4 response: {str(json_error)}")
+            logger.info("Attempting to extract NTEE code from plain text response")
+            content = response.choices[0].message.content
+            ntee_code = None
+            confidence = 0.0
+            
+            # Extract NTEE code (assuming it's in the format X00)
+            import re
+            ntee_match = re.search(r'[A-Z]\d{2}', content)
+            if ntee_match:
+                ntee_code = ntee_match.group(0)
+            
+            # Extract confidence (assuming it's a decimal number)
+            confidence_match = re.search(r'confidence"?\s*:\s*(\d+(\.\d+)?)', content)
+            if confidence_match:
+                confidence = float(confidence_match.group(1))
+            
+            if ntee_code:
+                logger.info(f"Extracted NTEE code: {ntee_code}, Confidence: {confidence}")
+                inference_attempt["response"] = {"ntee_code": ntee_code, "confidence": confidence}
+                openai_inference_attempts.append(inference_attempt)
+                return ntee_code, confidence
+            else:
+                logger.error("Failed to extract NTEE code from plain text response")
+                inference_attempt["error"] = "Failed to extract NTEE code"
+                openai_inference_attempts.append(inference_attempt)
+                return None, 0.0
     except Exception as e:
         logger.error(f"Error inferring NTEE code with GPT-4: {str(e)}")
         inference_attempt["error"] = str(e)
@@ -286,17 +330,18 @@ def get_user_input():
     return state, selected_urls
 
 def print_openai_inference_summary():
-    print("\n--- OpenAI Inference Summary ---")
+    summary = "\n--- OpenAI Inference Summary ---\n"
     for i, attempt in enumerate(openai_inference_attempts, 1):
-        print(f"\nAttempt {i}:")
-        print(f"Organization: {attempt['organization']}")
-        print(f"Mission: {attempt['mission']}")
+        summary += f"\nAttempt {i}:\n"
+        summary += f"Organization: {attempt['organization']}\n"
+        summary += f"Mission: {attempt['mission']}\n"
         if attempt['response']:
-            print(f"Inferred NTEE Code: {attempt['response']['ntee_code']}")
-            print(f"Confidence: {attempt['response']['confidence']}")
+            summary += f"Inferred NTEE Code: {attempt['response']['ntee_code']}\n"
+            summary += f"Confidence: {attempt['response']['confidence']}\n"
         if attempt['error']:
-            print(f"Error: {attempt['error']}")
-        print("-" * 50)
+            summary += f"Error: {attempt['error']}\n"
+        summary += "-" * 50 + "\n"
+    return summary
 
 def main():
     global successful_api_calls, unsuccessful_api_calls, openai_ntee_determinations, no_ntee_code_found
@@ -359,30 +404,37 @@ def main():
 
         save_to_s3_parquet(all_records)
 
-        # Log summary of API calls and NTEE code determinations
+        # Prepare summary of API calls and NTEE code determinations
         total_api_calls = successful_api_calls + unsuccessful_api_calls
-        print(f"\nSummary of API calls and NTEE code determinations:")
-        print(f"Total Nonprofit Explorer API calls: {total_api_calls}")
-        print(f"Successful Nonprofit Explorer API calls: {successful_api_calls}")
-        print(f"Unsuccessful Nonprofit Explorer API calls: {unsuccessful_api_calls}")
-        print(f"NTEE codes determined by OpenAI: {openai_ntee_determinations}")
-        print(f"Records with no NTEE code found: {no_ntee_code_found}")
+        summary = f"\nSummary of API calls and NTEE code determinations:\n"
+        summary += f"Total Nonprofit Explorer API calls: {total_api_calls}\n"
+        summary += f"Successful Nonprofit Explorer API calls: {successful_api_calls}\n"
+        summary += f"Unsuccessful Nonprofit Explorer API calls: {unsuccessful_api_calls}\n"
+        summary += f"NTEE codes determined by OpenAI: {openai_ntee_determinations}\n"
+        summary += f"Records with no NTEE code found: {no_ntee_code_found}\n"
 
         if total_api_calls > 0:
             success_rate = (successful_api_calls / total_api_calls) * 100
-            print(f"Nonprofit Explorer API success rate: {success_rate:.2f}%")
+            summary += f"Nonprofit Explorer API success rate: {success_rate:.2f}%\n"
 
         total_ntee_attempts = total_api_calls + openai_ntee_determinations
         if total_ntee_attempts > 0:
             ntee_success_rate = ((successful_api_calls + openai_ntee_determinations) / total_ntee_attempts) * 100
-            print(f"Overall NTEE code determination success rate: {ntee_success_rate:.2f}%")
+            summary += f"Overall NTEE code determination success rate: {ntee_success_rate:.2f}%\n"
 
-        # Print OpenAI inference summary
-        print_openai_inference_summary()
+        # Add OpenAI inference summary
+        summary += print_openai_inference_summary()
+
+        # Send summary to CloudWatch
+        send_logs_to_cloudwatch(summary)
+
+        # Print summary to console
+        print(summary)
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
         logger.exception("Exception details:")
+        send_logs_to_cloudwatch(f"An error occurred: {str(e)}\nException details: {logger.exception('Exception details:')}")
 
 if __name__ == '__main__':
     main()
