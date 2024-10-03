@@ -7,4 +7,3 @@ watchtower
 beautifulsoup4
 pandas
 openai
-os
