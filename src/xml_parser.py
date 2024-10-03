@@ -10,7 +10,7 @@ def extract_field(element, field_name, namespaces):
     paths_info = field_info.get('paths', {})
     if not paths_info:
         logger.warning(f"No paths defined for field '{field_name}'. Skipping extraction.")
-        return None
+        return None, None
 
     paths = paths_info.get('Common', [])
     # Include form-specific paths if available
@@ -54,33 +54,41 @@ def extract_field(element, field_name, namespaces):
     return None, None
 
 def parse_return(Return, namespaces, filename):
-    data = {}
-    form_type = detect_form_type(Return, namespaces)
-    logger.info(f"Detected form type for {filename}: {form_type}")
-    data['FormType'] = form_type
+    try:
+        data = {}
+        form_type = detect_form_type(Return, namespaces)
+        logger.info(f"Detected form type for {filename}: {form_type}")
+        data['FormType'] = form_type
 
-    # Extract fields defined in desired_fields
-    for field_name in desired_fields.keys():
-        value, path = extract_field(Return, field_name, namespaces)
-        if value is not None:
-            field_info = desired_fields[field_name]
-            # Handle special case for 'EIN' to remove hyphens
-            if field_name == 'EIN':
-                value = value.replace('-', '')
-            data[field_name] = convert_value(value, field_info['type'])
-            data[f'{field_name}_path'] = path  # Record the successful path
-            logger.debug(f"Extracted {field_name}: {data[field_name]} from {filename} using path: {path}")
-        else:
-            logger.debug(f"Field {field_name} not found in {filename} for form type {form_type}")
+        # Extract fields defined in desired_fields
+        for field_name in desired_fields.keys():
+            try:
+                value, path = extract_field(Return, field_name, namespaces)
+                if value is not None:
+                    field_info = desired_fields[field_name]
+                    # Handle special case for 'EIN' to remove hyphens
+                    if field_name == 'EIN':
+                        value = value.replace('-', '')
+                    data[field_name] = convert_value(value, field_info['type'])
+                    data[f'{field_name}_path'] = path  # Record the successful path
+                    logger.debug(f"Extracted {field_name}: {data[field_name]} from {filename} using path: {path}")
+                else:
+                    logger.debug(f"Field {field_name} not found in {filename} for form type {form_type}")
+            except Exception as e:
+                logger.error(f"Error processing field {field_name} in {filename}: {str(e)}")
 
-    # Check for missing critical fields
-    if 'EIN' not in data or not str(data['EIN']).isdigit():
-        logger.warning(f"Invalid or missing EIN in {filename}. Skipping record.")
+        # Check for missing critical fields
+        if 'EIN' not in data or not str(data.get('EIN', '')).isdigit():
+            logger.warning(f"Invalid or missing EIN in {filename}. Skipping record.")
+            return None
+
+        if 'TaxYear' not in data or data.get('TaxYear') is None:
+            logger.warning(f"Missing TaxYear in {filename}. Skipping record.")
+            return None
+
+        data['_source_file'] = filename
+        return data if len(data) > 1 else None
+
+    except Exception as e:
+        logger.error(f"Unexpected error processing Return in {filename}: {str(e)}")
         return None
-
-    if 'TaxYear' not in data or data['TaxYear'] is None:
-        logger.warning(f"Missing TaxYear in {filename}. Skipping record.")
-        return None
-
-    data['_source_file'] = filename
-    return data if len(data) > 1 else None
