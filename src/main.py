@@ -78,6 +78,8 @@ def get_ntee_code_from_api(ein):
         data = response.json()
         ntee_code = data['organization'].get('ntee_code')
         if ntee_code:
+            # Ensure we only keep the first 3 characters of the NTEE code
+            ntee_code = ntee_code[:3]
             successful_api_calls += 1
             time.sleep(0.5)  # Add delay to avoid throttling
             return ntee_code
@@ -141,6 +143,8 @@ def infer_ntee_code_with_gpt4(organization_name, mission_statement):
         
         try:
             result = json.loads(response.choices[0].message.content)
+            # Ensure we only keep the first 3 characters of the NTEE code
+            result["ntee_code"] = result["ntee_code"][:3]
             inference_attempt["response"] = result
             openai_inference_attempts.append(inference_attempt)
             return result["ntee_code"], result["confidence"]
@@ -153,9 +157,9 @@ def infer_ntee_code_with_gpt4(organization_name, mission_statement):
             
             # Extract NTEE code (assuming it's in the format X00)
             import re
-            ntee_match = re.search(r'[A-Z]\d{2}', content)
+            ntee_match = re.search(r'[A-Z]\d{2,3}', content)
             if ntee_match:
-                ntee_code = ntee_match.group(0)
+                ntee_code = ntee_match.group(0)[:3]  # Ensure we only keep the first 3 characters
             
             # Extract confidence (assuming it's a decimal number)
             confidence_match = re.search(r'confidence"?\s*:\s*(\d+(\.\d+)?)', content)
