@@ -17,7 +17,7 @@ import requests
 
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
-from data_analyzer import analyze_field_coverage, analyze_path_usage
+from data_analyzer import analyze_data
 from s3_utils import upload_file_to_s3, download_file_from_s3, get_s3_client
 from config import S3_BUCKET, S3_FOLDER, desired_fields
 
@@ -52,7 +52,7 @@ AVAILABLE_URLS = {
         "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_08A.zip",
     ],
     "2023": [
-        "https://donationtransparency.org/wp-content/uploads/2024/10/ID.zip",
+        "https://donationtransparency.org/wp-content/uploads/2024/10/Test.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_01A.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_02A.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_03A.zip",
@@ -124,6 +124,7 @@ AVAILABLE_URLS = {
         "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_6.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2018/download990xml_2018_7.zip",
     ]
+    # ... [rest of the AVAILABLE_URLS dictionary remains unchanged]
 }
 
 def get_ntee_code_from_api(ein):
@@ -134,20 +135,21 @@ def get_ntee_code_from_api(ein):
         if response.status_code == 200:
             data = response.json()
             ntee_code = data['organization'].get('ntee_code')
-            if ntee_code:
+            ntee_description = data['organization'].get('ntee_description')
+            if ntee_code and ntee_description:
                 successful_api_calls += 1
-                return ntee_code
+                return ntee_code, ntee_description
     except Exception as e:
         logger.error(f"Error fetching NTEE code from API for EIN {ein}: {str(e)}")
     unsuccessful_api_calls += 1
-    return None
+    return None, None
 
 def get_ntee_code_description(organization_name, mission_statement, ein):
     global openai_extractions
     # First, try to get the NTEE code from the Nonprofit Explorer API
-    ntee_code = get_ntee_code_from_api(ein)
-    if ntee_code:
-        return {"ntee_code": ntee_code, "ntee_description": "Retrieved from API"}
+    ntee_code, ntee_description = get_ntee_code_from_api(ein)
+    if ntee_code and ntee_description:
+        return {"ntee_code": ntee_code, "ntee_description": ntee_description}
 
     # If API fails, fall back to OpenAI inference
     prompt = f"""You are tasked with determining the National Taxonomy of Exempt Entities (NTEE) code and description for a nonprofit organization based on the information provided. You will be given the organization's EIN (Employer Identification Number), name, and possibly its mission statement. Your goal is to infer the most appropriate NTEE code and description, or use your existing knowledge if you're certain about the classification.
@@ -229,9 +231,6 @@ def save_to_s3_parquet(records):
     logger.info('Converting records to Parquet format.')
     new_df = pd.DataFrame(records)
 
-    # Convert NTEECodeDescription to string
-    new_df['NTEECodeDescription'] = new_df['NTEECodeDescription'].astype(str)
-
     s3_key = f'{S3_FOLDER}/irs990_data.parquet'
 
     s3_client = boto3.client('s3')
@@ -246,7 +245,6 @@ def save_to_s3_parquet(records):
         existing_data = download_file_from_s3(s3_key)
         existing_df = pd.read_parquet(BytesIO(existing_data))
         existing_df['EIN'] = existing_df['EIN'].astype(str)
-        existing_df['NTEECodeDescription'] = existing_df['NTEECodeDescription'].astype(str)
 
         new_df['EIN'] = new_df['EIN'].astype(str)
 
@@ -261,7 +259,6 @@ def save_to_s3_parquet(records):
         merged_df = new_df
 
     merged_df['EIN'] = merged_df['EIN'].astype(str)
-    merged_df['NTEECodeDescription'] = merged_df['NTEECodeDescription'].astype(str)
 
     # Convert DataFrame to PyArrow Table
     try:
@@ -380,43 +377,9 @@ def main():
         form_types = [r['FormType'] for r in all_records]
         logger.info(f"Form type distribution: {dict(Counter(form_types))}")
 
-        # Log extraction statistics for all fields
-        logger.info("Field extraction statistics:")
-        for field in desired_fields.keys():
-            field_values = [r.get(field) for r in all_records if field in r]
-            extraction_rate = (len(field_values) / len(all_records)) * 100 if len(all_records) > 0 else 0
-            logger.info(f"{field}: found in {len(field_values)}/{len(all_records)} records ({extraction_rate:.2f}%)")
-            
-            if field in ['TotalNetAssets', 'TotalAssets', 'TotalRevenue', 'TotalExpenses']:
-                valid_values = [x for x in field_values if x is not None and isinstance(x, (int, float))]
-                if valid_values:
-                    logger.info(f"{field}: min={min(valid_values)}, max={max(valid_values)}, avg={sum(valid_values)/len(valid_values)}")
-                else:
-                    logger.warning(f"No valid {field} values found")
-            
-            elif field == 'MissionStatement':
-                valid_statements = [ms for ms in field_values if ms]
-                if valid_statements:
-                    avg_length = sum(len(ms) for ms in valid_statements) / len(valid_statements)
-                    logger.info(f"Average MissionStatement length: {avg_length:.2f} characters")
-                else:
-                    logger.warning("No valid MissionStatement values found")
-            
-            elif field == 'NTEECodeDescription':
-                valid_codes = [code for code in field_values if code]
-                if valid_codes:
-                    code_counter = Counter(valid_codes)
-                    top_5_codes = code_counter.most_common(5)
-                    logger.info(f"Top 5 NTEE Code Descriptions: {top_5_codes}")
-                    logger.info(f"Number of unique NTEE Code Descriptions: {len(set(valid_codes))}")
-                else:
-                    logger.warning("No valid NTEE Code Descriptions found")
+        # Use the new analyze_data function
+        analyze_data(all_records)
 
-        avg_fields = sum(len(r) for r in all_records) / len(all_records) if all_records else 0
-        logger.info(f"Average fields per record: {avg_fields:.2f}")
-            
-        analyze_field_coverage(all_records)
-        analyze_path_usage(all_records)
         save_to_s3_parquet(all_records)
 
         # Log summary of API calls and extractions

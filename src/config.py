@@ -232,4 +232,22 @@ desired_fields = {
             ]
         }
     },
+    'NTEECode': {
+        'type': 'string',
+        'paths': {
+            'Common': [
+                '//*[local-name()="NTEECode"]/text()',
+                '//*[contains(local-name(), "NTEE") and contains(local-name(), "Code")]/text()'
+            ]
+        }
+    },
+    'NTEEDescription': {
+        'type': 'string',
+        'paths': {
+            'Common': [
+                '//*[local-name()="NTEEDescription"]/text()',
+                '//*[contains(local-name(), "NTEE") and contains(local-name(), "Description")]/text()'
+            ]
+        }
+    }
 }

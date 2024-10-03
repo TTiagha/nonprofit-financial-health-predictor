@@ -77,8 +77,9 @@ def process_xml_files(xml_files, state_filter, get_ntee_code_description):
                         organization_name = data.get('OrganizationName', '')
                         mission_statement = data.get('MissionStatement', '')
                         ein = data.get('EIN', '')  # Get the EIN from the parsed data
-                        ntee_code_description = get_ntee_code_description(organization_name, mission_statement, ein)
-                        data['NTEECodeDescription'] = ntee_code_description
+                        ntee_info = get_ntee_code_description(organization_name, mission_statement, ein)
+                        data['NTEECode'] = ntee_info.get('ntee_code', '')
+                        data['NTEEDescription'] = ntee_info.get('ntee_description', '')
 
                         records.append(data)
                         state_files.add(filename)
