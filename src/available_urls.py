@@ -13,7 +13,7 @@ AVAILABLE_URLS = {
         "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_08A.zip",
     ],
     "2023": [
-        "https://donationtransparency.org/wp-content/uploads/2024/10/hundred.zip"
+        "https://donationtransparency.org/wp-content/uploads/2024/10/hundred.zip",
         "https://donationtransparency.org/wp-content/uploads/2024/10/Test.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_01A.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_02A.zip",
