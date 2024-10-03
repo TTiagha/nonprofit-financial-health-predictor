@@ -114,10 +114,20 @@ def infer_ntee_code_with_gpt4(organization_name, mission_statement):
             max_tokens=150
         )
         
-        result = json.loads(response.choices[0].message.content)
-        inference_attempt["response"] = result
-        openai_inference_attempts.append(inference_attempt)
-        return result["ntee_code"], result["confidence"]
+        # Log the raw response content
+        logger.debug(f"Raw GPT-4 response: {response.choices[0].message.content}")
+        
+        try:
+            result = json.loads(response.choices[0].message.content)
+            inference_attempt["response"] = result
+            openai_inference_attempts.append(inference_attempt)
+            return result["ntee_code"], result["confidence"]
+        except json.JSONDecodeError as json_error:
+            logger.error(f"Error parsing JSON from GPT-4 response: {str(json_error)}")
+            logger.error(f"Response content: {response.choices[0].message.content}")
+            inference_attempt["error"] = f"JSON parsing error: {str(json_error)}"
+            openai_inference_attempts.append(inference_attempt)
+            return None, 0.0
     except Exception as e:
         logger.error(f"Error inferring NTEE code with GPT-4: {str(e)}")
         inference_attempt["error"] = str(e)
