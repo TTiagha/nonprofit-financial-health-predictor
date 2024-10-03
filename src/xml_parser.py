@@ -86,6 +86,20 @@ def parse_return(Return, namespaces, filename):
             logger.warning(f"Missing TaxYear in {filename}. Skipping record.")
             return None
 
+        # Handle NTEE Code and Description more gracefully
+        if 'NTEECode' not in data or data['NTEECode'] is None:
+            logger.warning(f"NTEECode not found in {filename}.")
+            data['NTEECode'] = 'Unknown'
+        
+        if 'NTEEDescription' not in data or data['NTEEDescription'] is None:
+            logger.warning(f"NTEEDescription not found in {filename}.")
+            data['NTEEDescription'] = 'Unknown'
+
+        # Ensure all string fields are properly handled to avoid NoneType errors
+        for field, value in data.items():
+            if desired_fields.get(field, {}).get('type') == 'string' and value is None:
+                data[field] = ''  # Replace None with empty string for string fields
+
         data['_source_file'] = filename
         return data if len(data) > 1 else None
 

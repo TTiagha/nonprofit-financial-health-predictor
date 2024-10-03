@@ -1,5 +1,8 @@
 # main.py
 
+# Note: This script requires openai package version 1.0.0 or later
+# If you encounter any issues, please ensure you have the latest version installed
+
 import os
 import time
 import logging
@@ -14,7 +17,7 @@ import pandas as pd
 import json
 import requests
 import csv
-import openai
+from openai import OpenAI
 from dotenv import load_dotenv
 
 from available_urls import AVAILABLE_URLS
@@ -33,7 +36,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Set up OpenAI API
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Global counters for API calls and NTEE code determination
 successful_api_calls = 0
@@ -101,7 +104,7 @@ def infer_ntee_code_with_gpt4(organization_name, mission_statement):
     }
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are an AI assistant tasked with inferring NTEE codes for nonprofit organizations based on their name and mission statement."},
