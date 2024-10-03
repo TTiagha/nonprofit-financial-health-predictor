@@ -33,6 +33,11 @@ if not api_key:
 client = OpenAI(api_key=api_key)
 model = 'gpt-4o-mini'
 
+# Global counters for API calls
+successful_api_calls = 0
+unsuccessful_api_calls = 0
+openai_extractions = 0
+
 # Available URLs for IRS Form 990 data
 AVAILABLE_URLS = {
     "2024": [
@@ -47,6 +52,7 @@ AVAILABLE_URLS = {
         "https://apps.irs.gov/pub/epostcard/990/xml/2024/2024_TEOS_XML_08A.zip",
     ],
     "2023": [
+        "https://donationtransparency.org/wp-content/uploads/2024/10/Test.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_01A.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_02A.zip",
         "https://apps.irs.gov/pub/epostcard/990/xml/2023/2023_TEOS_XML_03A.zip",
@@ -121,6 +127,7 @@ AVAILABLE_URLS = {
 }
 
 def get_ntee_code_from_api(ein):
+    global successful_api_calls, unsuccessful_api_calls
     url = f"https://projects.propublica.org/nonprofits/api/v2/organizations/{ein}.json"
     try:
         response = requests.get(url)
@@ -128,26 +135,45 @@ def get_ntee_code_from_api(ein):
             data = response.json()
             ntee_code = data['organization'].get('ntee_code')
             if ntee_code:
+                successful_api_calls += 1
                 return ntee_code
     except Exception as e:
         logger.error(f"Error fetching NTEE code from API for EIN {ein}: {str(e)}")
+    unsuccessful_api_calls += 1
     return None
 
 def get_ntee_code_description(organization_name, mission_statement, ein):
+    global openai_extractions
     # First, try to get the NTEE code from the Nonprofit Explorer API
     ntee_code = get_ntee_code_from_api(ein)
     if ntee_code:
-        return f"NTEE Code: {ntee_code}"
+        return {"ntee_code": ntee_code, "ntee_description": "Retrieved from API"}
 
     # If API fails, fall back to OpenAI inference
-    prompt = f"Infer the NTEE (National Taxonomy of Exempt Entities) code description into JSON data for the following nonprofit organization:\n\nOrganization Name: {organization_name}\n"
-    
-    if mission_statement:
-        prompt += f"Mission Statement: {mission_statement}\n"
-    else:
-        prompt += "No mission statement available. Please infer based on the organization name and your knowledge of nonprofit sectors.\n"
-    
-    prompt += "\nProvide a brief NTEE code description (e.g., 'Housing Development, Construction & Management', 'Emergency Assistance', 'Food Banks & Pantries') based on the information given."
+    prompt = f"""You are tasked with determining the National Taxonomy of Exempt Entities (NTEE) code and description for a nonprofit organization based on the information provided. You will be given the organization's EIN (Employer Identification Number), name, and possibly its mission statement. Your goal is to infer the most appropriate NTEE code and description, or use your existing knowledge if you're certain about the classification.
+
+Here's the information you'll be working with:
+
+EIN: <EIN>{ein}</EIN>
+Nonprofit Name: <NONPROFIT_NAME>{organization_name}</NONPROFIT_NAME>
+Mission Statement (if provided): <MISSION_STATEMENT>{mission_statement if mission_statement else "Not provided"}</MISSION_STATEMENT>
+
+To determine the NTEE code and description:
+1. Analyze the nonprofit's name and mission statement (if provided).
+2. Consider the main focus area of the organization (e.g., education, health, environment).
+3. Identify the specific activities or services the organization provides.
+4. Match these characteristics to the most appropriate NTEE category and subcategory.
+
+If you're certain about the classification based on your existing knowledge (e.g., for well-known organizations), you may use that information directly.
+
+Output your response in JSON format, including both the NTEE code and its description. Use the following structure:
+
+{{
+  "ntee_code": "X##",
+  "ntee_description": "Description of the NTEE category"
+}}
+
+Now, based on the information provided about the nonprofit organization, determine the most appropriate NTEE code and description. Output your response in the specified JSON format."""
 
     try:
         response = client.chat.completions.create(
@@ -159,11 +185,12 @@ def get_ntee_code_description(organization_name, mission_statement, ein):
             response_format={"type": "json_object"},
             temperature=0.0
         )
-        description_json = json.loads(response.choices[0].message.content)
-        return description_json.get('ntee_code_description', 'Unknown')
+        result = json.loads(response.choices[0].message.content)
+        openai_extractions += 1
+        return result
     except Exception as e:
         logger.error(f"Error inferring NTEE code: {str(e)}")
-        return "Unknown"
+        return {"ntee_code": "Unknown", "ntee_description": "Error in inference"}
 
 def upload_xml_content_to_s3(xml_content, s3_key):
     try:
@@ -298,6 +325,7 @@ def get_user_input():
     return state, selected_urls
 
 def main():
+    global successful_api_calls, unsuccessful_api_calls, openai_extractions
     logger.info(f"Starting Nonprofit Financial Health Predictor at {datetime.now()}")
 
     try:
@@ -390,6 +418,18 @@ def main():
         analyze_field_coverage(all_records)
         analyze_path_usage(all_records)
         save_to_s3_parquet(all_records)
+
+        # Log summary of API calls and extractions
+        total_api_calls = successful_api_calls + unsuccessful_api_calls
+        logger.info(f"Summary of API calls and extractions:")
+        logger.info(f"Total Nonprofit Explorer API calls: {total_api_calls}")
+        logger.info(f"Successful Nonprofit Explorer API calls: {successful_api_calls}")
+        logger.info(f"Unsuccessful Nonprofit Explorer API calls: {unsuccessful_api_calls}")
+        logger.info(f"NTEE codes extracted via OpenAI API: {openai_extractions}")
+
+        if total_api_calls > 0:
+            success_rate = (successful_api_calls / total_api_calls) * 100
+            logger.info(f"Nonprofit Explorer API success rate: {success_rate:.2f}%")
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
