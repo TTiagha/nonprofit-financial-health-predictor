@@ -14,6 +14,8 @@ import pandas as pd
 import json
 import requests
 import csv
+import openai
+from dotenv import load_dotenv
 
 from xml_downloader import download_and_extract_xml_files
 from data_processor import process_xml_files
@@ -25,9 +27,17 @@ from config import S3_BUCKET, S3_FOLDER, desired_fields
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Global counters for API calls
+# Load environment variables
+load_dotenv()
+
+# Set up OpenAI API
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Global counters for API calls and NTEE code determination
 successful_api_calls = 0
 unsuccessful_api_calls = 0
+openai_ntee_determinations = 0
+no_ntee_code_found = 0
 
 # Available URLs for IRS Form 990 data
 AVAILABLE_URLS = {
@@ -150,14 +160,57 @@ def get_ntee_description_from_csv(ntee_code):
         logger.error(f"Error reading NTEE description from CSV for code {ntee_code}: {str(e)}")
     return "Description not found"
 
+def infer_ntee_code_with_gpt4(organization_name, mission_statement):
+    prompt = f"""
+    Given the following information about a nonprofit organization, infer the most appropriate NTEE (National Taxonomy of Exempt Entities) code. The NTEE code should be in the format of a letter followed by two digits (e.g., A01, B03, C30).
+
+    Organization Name: {organization_name}
+    Mission Statement: {mission_statement}
+
+    Provide your response in the following JSON format:
+    {{
+        "ntee_code": "X00",
+        "confidence": 0.0
+    }}
+
+    Where "ntee_code" is your inferred NTEE code, and "confidence" is a number between 0 and 1 indicating your confidence in this inference.
+    """
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are an AI assistant tasked with inferring NTEE codes for nonprofit organizations based on their name and mission statement."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            max_tokens=150
+        )
+        
+        result = json.loads(response.choices[0].message.content)
+        return result["ntee_code"], result["confidence"]
+    except Exception as e:
+        logger.error(f"Error inferring NTEE code with GPT-4: {str(e)}")
+        return None, 0.0
+
 def get_ntee_code_description(organization_name, mission_statement, ein):
+    global openai_ntee_determinations, no_ntee_code_found
     ntee_code = get_ntee_code_from_api(ein)
     if ntee_code:
         ntee_description = get_ntee_description_from_csv(ntee_code)
         return {"ntee_code": ntee_code, "ntee_description": ntee_description}
     else:
-        logger.warning(f"Failed to get NTEE code for EIN {ein}")
-        return {"ntee_code": "Unknown", "ntee_description": "Unknown"}
+        logger.warning(f"Failed to get NTEE code for EIN {ein} from API. Attempting to infer with GPT-4.")
+        inferred_ntee_code, confidence = infer_ntee_code_with_gpt4(organization_name, mission_statement)
+        if inferred_ntee_code:
+            ntee_description = get_ntee_description_from_csv(inferred_ntee_code)
+            logger.info(f"Inferred NTEE code {inferred_ntee_code} for EIN {ein} with confidence {confidence}")
+            openai_ntee_determinations += 1
+            return {"ntee_code": inferred_ntee_code, "ntee_description": ntee_description, "inferred": True, "confidence": confidence}
+        else:
+            logger.warning(f"Failed to infer NTEE code for EIN {ein}")
+            no_ntee_code_found += 1
+            return {"ntee_code": "Unknown", "ntee_description": "Unknown", "inferred": False}
 
 def upload_xml_content_to_s3(xml_content, s3_key):
     try:
@@ -292,7 +345,7 @@ def get_user_input():
     return state, selected_urls
 
 def main():
-    global successful_api_calls, unsuccessful_api_calls
+    global successful_api_calls, unsuccessful_api_calls, openai_ntee_determinations, no_ntee_code_found
     logger.info(f"Starting Nonprofit Financial Health Predictor at {datetime.now()}")
 
     try:
@@ -352,16 +405,23 @@ def main():
 
         save_to_s3_parquet(all_records)
 
-        # Log summary of API calls
+        # Log summary of API calls and NTEE code determinations
         total_api_calls = successful_api_calls + unsuccessful_api_calls
-        logger.info(f"Summary of API calls:")
+        logger.info(f"Summary of API calls and NTEE code determinations:")
         logger.info(f"Total Nonprofit Explorer API calls: {total_api_calls}")
         logger.info(f"Successful Nonprofit Explorer API calls: {successful_api_calls}")
         logger.info(f"Unsuccessful Nonprofit Explorer API calls: {unsuccessful_api_calls}")
+        logger.info(f"NTEE codes determined by OpenAI: {openai_ntee_determinations}")
+        logger.info(f"Records with no NTEE code found: {no_ntee_code_found}")
 
         if total_api_calls > 0:
             success_rate = (successful_api_calls / total_api_calls) * 100
             logger.info(f"Nonprofit Explorer API success rate: {success_rate:.2f}%")
+
+        total_ntee_attempts = total_api_calls + openai_ntee_determinations
+        if total_ntee_attempts > 0:
+            ntee_success_rate = ((successful_api_calls + openai_ntee_determinations) / total_ntee_attempts) * 100
+            logger.info(f"Overall NTEE code determination success rate: {ntee_success_rate:.2f}%")
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
